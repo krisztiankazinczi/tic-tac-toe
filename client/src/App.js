@@ -19,6 +19,7 @@ const App = () => {
 
   return (
     <div className="App">
+      <h2>Can I see this</h2>
       {text && (
         <h2>{text}</h2>
       )}
