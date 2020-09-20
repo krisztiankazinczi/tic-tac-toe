@@ -12,7 +12,7 @@ const App = () => {
   });
 
   const textToDisplay = async () => {
-    const response = await fetch(`/api/test`)
+    const response = await fetch(`https://amobagame.herokuapp.com/api/test`)
     const info = await response.json()
     return info   
   }
