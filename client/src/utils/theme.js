@@ -1,6 +1,6 @@
 const mainBackgroundColor = "rgb(23,34,44)";
 const primaryMainColor = "#d500f9";
-const mainTextColor = '#9BA8B5'
+const mainTextColor = "#9BA8B5";
 
 const theme = {
   palette: {
@@ -15,36 +15,37 @@ const theme = {
       main: "#4dd0e1",
       dark: "#35919d",
       contrastText: "#fff",
-    }
+    },
   },
   styles: {
     colors: {
       mainBackgroundColor: "rgb(23,34,44)",
-      secondaryBackgroundColor: '#30445C',
-      secondaryBackgroundColorHovered: '#3c5573',
-      mainTextColor: '#9BA8B5',
-      orangeColor: "#ff5733"
+      secondaryBackgroundColor: "#30445C",
+      secondaryBackgroundColorHovered: "#3c5573",
+      mainTextColor: "#9BA8B5",
+      orangeColor: "#ff5733",
     },
     button: {
-      backgroundColor: '#30445C',
+      backgroundColor: "#30445C",
       color: "#ff5733",
       cursor: "pointer",
-      '&:hover': {
+      padding: '10px',
+      "&:hover": {
         background: "#3c5573",
         transition: "100ms transform ease-in",
-        transform: "scale(1.08)"
-     },
+        transform: "scale(1.08)",
+      },
     },
-     centerToMiddle: {
+    centerToMiddle: {
       display: "flex",
       flexDirection: "column",
       height: "100vh",
-      width: '100%',
+      width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: mainBackgroundColor
-     },
-  }
+      backgroundColor: mainBackgroundColor,
+    },
+  },
 };
 
 export default theme;
