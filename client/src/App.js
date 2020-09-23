@@ -13,7 +13,8 @@ const App = () => {
       <Switch>
         <Route exact path="/" component={StartPage} />
         <Route exact path="/selectGameMode" component={GameMode} />
-        <Route exact path="/waitingRoom/:mode" component={WaitingRoom} />
+        <Route exact path="/waitingRoom/:mode/:roomId" component={WaitingRoom} />
+        <Route exact path="/game/:roomId" component={StartPage} />
 
       </Switch>
     </Router>

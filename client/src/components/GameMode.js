@@ -32,7 +32,7 @@ const GameMode = ({ classes }) => {
 
   const selectGameMode = (event) => {
     // on MaterialUI elements I had to use event.currentTarget.value to get the value of the field
-    if (event.currentTarget.value === 'other' || event.currentTarget.value === 'friend') {
+    if (event.currentTarget.value === 'random' || event.currentTarget.value === 'friend') {
       setMode(event.currentTarget.value)
     }
   }
@@ -42,7 +42,7 @@ const GameMode = ({ classes }) => {
         className={classes.centerToMiddle}
       >
         <Button
-          value="other"
+          value="random"
           className={classes.button}
           onClick={(e) => selectGameMode(e)}
         >
