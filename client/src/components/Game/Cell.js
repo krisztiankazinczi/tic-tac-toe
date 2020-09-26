@@ -8,8 +8,8 @@ const styles = (theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: '30px',
-    minHeight: '30px',
+    // minWidth: '30px',
+    // minHeight: '30px',
     color: theme.styles.colors.orangeColor
   },
   allBorders: {
@@ -58,9 +58,7 @@ function Cell({ classes, value, rowId, lastRow, colId, lastCol, width, height, f
   const handleClick = () => {
     placeMark(rowId, colId, value)
   }
-  console.log(fontSize)
 
-  console.log(width, height)
   const size = {
     width: width,
     height: height,
