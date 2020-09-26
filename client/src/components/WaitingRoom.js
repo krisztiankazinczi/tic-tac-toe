@@ -49,10 +49,13 @@ const WaitingRoom = ({ classes }) => {
   const [otherPlayerReady, setOtherPlayerReady] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+  }, []);
 
-  if (mode !== 'random' || mode !== 'friend') {
-    return <Redirect to="/" />;
+  if (mode !== 'random') {
+    if (mode !== 'friend') {
+      return <Redirect to="/" />;
+    }
   }
 
   const copyURL = () => {

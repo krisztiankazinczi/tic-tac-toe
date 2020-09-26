@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import withStyles from "@material-ui/core/styles/withStyles";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -21,16 +21,20 @@ const styles = (theme) => ({
 const GameMode = ({ classes }) => {
   const [{ username }] = useAuth();
   const [mode, setMode] = useState('');
+  const [roomId, setRoomId] = useState('askldjhg;laksh;jlskdhg')
 
   if (!username) {
     return <Redirect to='/' />
   }
 
-  if (mode) {
-    return <Redirect to={`/waitingRoom/${mode}`} />
+  if (mode && roomId) {
+    console.log(`/waitingRoom/${mode}/${roomId}`)
+    return <Redirect to={`/waitingRoom/${mode}/${roomId}`} />
   }
 
   const selectGameMode = (event) => {
+    //get RoomId from server
+
     // on MaterialUI elements I had to use event.currentTarget.value to get the value of the field
     if (event.currentTarget.value === 'random' || event.currentTarget.value === 'friend') {
       setMode(event.currentTarget.value)
@@ -62,7 +66,7 @@ const GameMode = ({ classes }) => {
             className={classes.buttonText}
             variant="h5"
           >
-            Play with random friends
+            Play with friends
           </Typography>
         </Button>
       </div>
