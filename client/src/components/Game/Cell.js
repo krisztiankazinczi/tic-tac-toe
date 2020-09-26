@@ -8,8 +8,6 @@ const styles = (theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    // minWidth: '30px',
-    // minHeight: '30px',
     color: theme.styles.colors.orangeColor
   },
   allBorders: {
@@ -62,7 +60,7 @@ function Cell({ classes, value, rowId, lastRow, colId, lastCol, width, height, f
   const size = {
     width: width,
     height: height,
-    fontSize: fontSize
+    fontSize: fontSize,
   }
 
   return (
