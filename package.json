@@ -20,6 +20,9 @@
   "homepage": "https://github.com/krisztiankazinczi/tic-tac-toe#readme",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0",
+    "uuid": "^8.3.0"
   }
 }

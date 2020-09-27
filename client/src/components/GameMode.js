@@ -5,9 +5,14 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import Spinner from './Spinner';
 
 import { Redirect } from "react-router-dom";
 import { useAuth } from "../store/authProvider";
+import socketIOClient from 'socket.io-client';
+
+
+// import useSocket from '../customHooks/useSocket';
 
 const styles = (theme) => ({
   ...theme.styles,
@@ -15,8 +20,8 @@ const styles = (theme) => ({
     textTransform: "capitalized",
   },
   button: {
-    ...theme.styles.button,
     marginTop: "30px",
+    textTransform: 'none'
   },
   options: {
     display: "flex",
@@ -57,13 +62,13 @@ const styles = (theme) => ({
     color: theme.styles.colors.orangeColor,
     backgroundColor: theme.styles.colors.secondaryBackgroundColor,
     '&:hover': {
-      background: theme.styles.colors.secondaryBackgroundColor,
+      background: theme.styles.colors.secondaryBackgroundColorHovered,
     },
     '&.Mui-selected': {
-      background: theme.styles.colors.secondaryBackgroundColor,
+      background: theme.styles.colors.secondaryBackgroundColorHovered,
     },
     '&.Mui-selected:hover': {
-      background: theme.styles.colors.secondaryBackgroundColor,
+      background: theme.styles.colors.secondaryBackgroundColorHovered,
     }
   },
 });
@@ -75,10 +80,11 @@ const characters = ['X', 'O'];
 const GameMode = ({ classes }) => {
   const [{ username }] = useAuth();
   const [mode, setMode] = useState("");
+  const [boardSize, setBoardSize] = useState(10);
+  const [winLength, setWinLength] = useState(5);
+  const [myChar, setMyChar] = useState('X');
   const [roomId, setRoomId] = useState("");
-  const [boardSize, setBoardSize] = useState(0);
-  const [winLength, setWinLength] = useState(0);
-  const [myChar, setMyChar] = useState('');
+  // const { getRoomId, roomId, loadingData} = useSocket();
 
   if (!username) {
     return <Redirect to="/" />;
@@ -87,6 +93,7 @@ const GameMode = ({ classes }) => {
   if (mode && roomId) {
     return <Redirect to={`/waitingRoom/${mode}/${roomId}`} />;
   }
+
 
   const selectGameMode = (event) => {
     //get RoomId from server
@@ -100,11 +107,24 @@ const GameMode = ({ classes }) => {
     }
   };
 
-  const startGame = () => {
+  const startGame = async () => {
     if (mode && boardSize && winLength && myChar) {
-      // ...fetch
+      // getRoomId(mode, boardSize, winLength, myChar)
+      const res = await fetch("http://localhost:5000/roomId", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mode, boardSize, winLength, myChar
+        })
+      });
+      const id = await res.json();
+      setRoomId(id);
+      console.log(mode, roomId)
     }
   }
+
 
 
   if (!mode) {
@@ -112,6 +132,8 @@ const GameMode = ({ classes }) => {
       <div className={classes.centerToMiddle}>
         <Button
           value="random"
+          variant="outlined"
+          color="primary"
           className={classes.button}
           onClick={(e) => selectGameMode(e)}
         >
@@ -121,6 +143,8 @@ const GameMode = ({ classes }) => {
         </Button>
         <Button
           value="friend"
+          variant="outlined"
+          color="primary"
           className={classes.button}
           onClick={(e) => selectGameMode(e)}
         >
@@ -197,6 +221,7 @@ const GameMode = ({ classes }) => {
         variant="outlined"
         color="primary"
         onClick={startGame}
+        // disabled={loadingData ? true : false}
       >
         <Typography variant="h5">Start</Typography>
       </Button>

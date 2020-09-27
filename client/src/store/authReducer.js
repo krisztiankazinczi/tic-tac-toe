@@ -1,7 +1,7 @@
 import { SET_USER } from "./action_types";
 
 export const initialState = {
-  username: "Orsolya",
+  username: Math.random(),
 };
 
 const reducer = (state, { type, payload }) => {

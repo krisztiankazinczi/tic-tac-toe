@@ -22,7 +22,7 @@ ReactDOM.render(
         <App />
       </AuthProvider>
     </MuiThemeProvider>
-  </React.StrictMode>,
+   </React.StrictMode>,
   document.getElementById("root")
 );
 

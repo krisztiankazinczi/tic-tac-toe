@@ -6,10 +6,17 @@ import copy from "copy-to-clipboard";
 
 import { Redirect } from "react-router-dom";
 import { useAuth } from "../store/authProvider";
+import useSocket from '../customHooks/useSocket';
 
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
+
+import socketIOClient from 'socket.io-client';
+
+const serverUrl = process.env.REACT_APP_DEVELOPMENT_MODE === 'true'
+  ? "http://localhost:5000"
+  : process.env.REACT_APP_BACK_END_URL;
 
 const styles = (theme) => ({
   ...theme.styles,
@@ -44,19 +51,66 @@ const styles = (theme) => ({
 
 const WaitingRoom = ({ classes }) => {
   const { mode, roomId } = useParams();
+  const [{ username }] = useAuth();
+  const [players, setPlayers] = useState([])
   const [playerJoined, setPlayerJoined] = useState(false); // 1 other player have to join to our game to start
   const [meReady, setMeReady] = useState(false);
   const [otherPlayerReady, setOtherPlayerReady] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  // const {isConnected, everyoneConnected, loadingData, joinRoom} = useSocket();
+
 
   useEffect(() => {
+    // joinRoom(roomId, mode, username)
+    if (!username) return;
+
+    const socket = socketIOClient(serverUrl);
+    socket.emit("join-room", roomId, mode, username);
+
+    socket.on("user-connected", (players) => {
+      setPlayers(players)
+    if (Object.keys(players).length === 2) {
+      setPlayerJoined(true)
+    }
+    });
+
+    socket.on("player-ready", (players) => {
+      console.log(players)
+      setPlayers(players)
+      Object.entries(players).forEach(([player, values]) => {
+        if (values.ready === true) {
+          if (player === username.toString()) {
+            setMeReady(true)
+          } 
+          else setOtherPlayerReady(true)
+        }
+      })
+    })
+
+    socket.on("room-is-full", (roomId) => {
+      // dialog will pop up and then a click 'OK' will Link to "/"
+      console.log('room is full')
+    })
+
+    return () => socket.disconnect();
+
   }, []);
+
+  const setStatusToReady = () => {
+    const socket = socketIOClient(serverUrl);
+    console.log(roomId, mode, username)
+    socket.emit("ready", roomId, mode, username)
+  }
 
   if (mode !== 'random') {
     if (mode !== 'friend') {
       return <Redirect to="/" />;
     }
   }
+
+  // if (!isConnected) {
+  //   return <div>Loading</div>
+  // }
 
   const copyURL = () => {
     copy(window.location.href);
@@ -67,7 +121,7 @@ const WaitingRoom = ({ classes }) => {
     return <Redirect to={`/game/${roomId}`} />;
   }
 
-  if (mode === "random") {
+  if ( mode === "random") {
     return (
       <div className={classes.centerToMiddle}>
         <Typography className={classes.textColor} variant="h3">
@@ -104,6 +158,7 @@ const WaitingRoom = ({ classes }) => {
                   size="large"
                   variant="outlined"
                   className={classes.button}
+                  onClick={setStatusToReady}
                 >
                   I am Ready
                 </Button>
@@ -115,7 +170,7 @@ const WaitingRoom = ({ classes }) => {
     );
   }
 
-  if (mode === "friend") {
+  if ( mode === "friend") {
     return (
       <div className={classes.centerToMiddle}>
         <Typography className={classes.textColor} variant="h3">
@@ -179,6 +234,7 @@ const WaitingRoom = ({ classes }) => {
                   size="large"
                   variant="outlined"
                   className={classes.button}
+                  onClick={setStatusToReady}
                 >
                   I am Ready
                 </Button>
