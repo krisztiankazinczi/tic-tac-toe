@@ -13,7 +13,7 @@ const styles = (theme) => ({
   }
 });
 
-function Row({ classes, row, rowId, lastRow, width, height, fontSize, placeMark }) {
+function Row({ classes, row, rowId, lastRow, width, height, fontSize, placeMark, char }) {
 
 
 
@@ -21,7 +21,7 @@ function Row({ classes, row, rowId, lastRow, width, height, fontSize, placeMark 
     <div className={classes.row}>
       {row && (
         row.map((value, id) => (
-          <Cell key={id} fontSize={fontSize} value={value} rowId={rowId} lastRow={lastRow} colId={id} lastCol={row.length - 1} width={width / (lastRow + 1)} height={height} placeMark={placeMark} />
+          <Cell key={id} char={char} fontSize={fontSize} value={value} rowId={rowId} lastRow={lastRow} colId={id} lastCol={row.length - 1} width={width / (lastRow + 1)} height={height} placeMark={placeMark} />
         ))
       )}
     </div>

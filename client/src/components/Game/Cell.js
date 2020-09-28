@@ -51,15 +51,15 @@ const styles = (theme) => ({
   },
 });
 
-function Cell({ classes, value, rowId, lastRow, colId, lastCol, width, height, fontSize, placeMark }) {
+function Cell({ classes, value, rowId, lastRow, colId, lastCol, width, height, fontSize, placeMark, char }) {
 
   const handleClick = () => {
-    placeMark(rowId, colId, value)
+    placeMark(rowId, colId, char)
   }
 
   const size = {
-    width: width,
-    height: height,
+    minWidth: width,
+    minHeight: height,
     fontSize: fontSize,
   }
 

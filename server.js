@@ -46,6 +46,7 @@ app.post("/roomId", (req, res) => {
       score: 0,
     },
   };
+  games[mode][roomId].onTurn = username;
 
   const generatedBoard = Array(boardSize)
     .fill()
@@ -83,7 +84,6 @@ io.on("connection", (socket) => {
   // });
 
   socket.on("join-room", (roomId, mode, username) => {
-    console.log(roomId, mode, username);
     if (mode !== "random") {
       if (mode !== "friend") {
         return; // custom error event + error message
@@ -116,7 +116,7 @@ io.on("connection", (socket) => {
     io.sockets.in(roomId).emit("user-connected", games[mode][roomId].players);
 
     if (Object.keys(games[mode][roomId].players).length === 2) {
-      games[mode][roomId].players.tie = {
+      games[mode][roomId].players.Tie = {
         score: 0,
       };
     }
@@ -135,9 +135,16 @@ io.on("connection", (socket) => {
       .emit(
         "get-initial-data",
         games[mode][roomId].players,
-        games[mode][roomId].board
+        games[mode][roomId].board,
+        games[mode][roomId].onTurn
       );
   });
+
+  socket.on("place-mark", (roomId, mode, username, rowId, colId, value) => {
+    games[mode][roomId].board[rowId][colId] = value
+    console.log(games[mode][roomId].board);
+    io.sockets.in(roomId).emit("placed-mark", rowId, colId, value)
+  })
 
   socket.on("disconnect", () => {
     console.log(`user ${socket.id} disconnected`);
@@ -150,3 +157,33 @@ app.get("*", (req, res) => {
 });
 
 server.listen(port, () => console.log(`App is running on port: ${port}`));
+
+const convertPlayersObjToArray = (players, username) => {
+  // the order of players will be for everyone: 1. the player itself, 2. Tie, 3. the opponent
+  const modifiedPlayers = [];
+
+  const playerNames = Object.keys(players);
+  
+  // it's always the Tie key and value
+  modifiedPlayers[1] = {
+    [playerNames[2]]: players['Tie'],
+  };
+
+  if (playerNames[0] === username) {
+    modifiedPlayers[0] = {
+      [playerNames[0]]: players[playerNames[0]],
+    };
+    modifiedPlayers[2] = {
+      [playerNames[1]]: players[playerNames[1]],
+    };
+  } else if (playerNames[0] !== username) {
+    modifiedPlayers[0] = {
+      [playerNames[1]]: players[playerNames[1]],
+    };
+    modifiedPlayers[2] = {
+      [playerNames[0]]: players[playerNames[0]],
+    };
+  }
+  console.log(modifiedPlayers)
+  return modifiedPlayers;
+};

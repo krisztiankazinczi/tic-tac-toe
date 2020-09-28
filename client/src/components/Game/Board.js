@@ -13,26 +13,13 @@ const styles = (theme) => ({
   },
 });
 
-function Board({ classes, width }) {
-  const [board, setBoard] = useState(null);
+function Board({ classes, width, board, placeMark, char }) {
+  // const [board, setBoard] = useState(null);
 
   const boardSize = {
     width: `${width}px`,
     height: `${width * SIZE_CORRECTION}px`,
   }
-
-  useEffect(() => {
-    //socketrol jonnek a meretek
-    const generatedBoard = Array(10)
-      .fill()
-      .map(() => Array(10).fill("X"));
-    setBoard(generatedBoard);
-  }, []);
-
-  const placeMark = (rowId, colId, value) => {
-    console.log(rowId, colId, value);
-  };
-
 
   return (
     // <div ref={boardRef} className={classes.board}>
@@ -41,6 +28,7 @@ function Board({ classes, width }) {
         board.map((row, id) => (
           <Row
             key={id}
+            char={char}
             fontSize={((parseInt(width) * SIZE_CORRECTION) / board.length) * SIZE_CORRECTION}
             row={row}
             rowId={id}
