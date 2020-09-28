@@ -8,6 +8,8 @@ import Button from "@material-ui/core/Button";
 import Board from './Game/Board';
 import PlayerName from './Game/PlayerName';
 
+import socketIOClient from 'socket.io-client';
+
 const styles = (theme) => ({
   ...theme.styles,
   centerToMiddle: {
@@ -29,7 +31,6 @@ const styles = (theme) => ({
     justifyContent: 'space-around',
     paddingTop: '10px',
     borderTop: `2px solid ${theme.styles.colors.mainTextColor}`
-    // width: '600px'
   },
   buttons: {
     display: 'flex',
@@ -38,7 +39,6 @@ const styles = (theme) => ({
     justifyContent: 'space-around',
     marginTop: '10px',
     marginBottom: '10px',
-    // width: '600px'
   },
   container: {
     width: '100%',
@@ -48,16 +48,36 @@ const styles = (theme) => ({
 
 const FONT_SIZE_CORRECTION = 0.025;
 
+const serverUrl = process.env.REACT_APP_DEVELOPMENT_MODE === 'true'
+  ? "http://localhost:5000"
+  : process.env.REACT_APP_BACK_END_URL;
+
 const Game = ({ classes }) => {
-  const { roomId } = useParams();
+  const { mode, roomId } = useParams();
   const [{ username }] = useAuth();
   const boardRef = useRef();
-  const [width, setWidth] = useState(0)
+  const [width, setWidth] = useState(0);
+  
 
   useLayoutEffect(() => {
     if (boardRef.current) {
       setWidth(boardRef.current.offsetWidth)
     }
+  }, []);
+
+  useEffect(() => {
+    if (!username) return;
+
+    const socket = socketIOClient(serverUrl);
+    socket.emit("join-room", roomId, mode, username);
+
+    socket.on("get-initial-data", (playerInfo, board) => {
+      console.log(playerInfo)
+      console.log(board)
+    })
+
+    socket.emit("get-game-data", roomId, mode, username);
+
   }, []);
 
   const containerWidth = {

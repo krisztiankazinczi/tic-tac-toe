@@ -108,7 +108,7 @@ const GameMode = ({ classes }) => {
   };
 
   const startGame = async () => {
-    if (mode && boardSize && winLength && myChar) {
+    if (mode && boardSize && winLength && myChar && username) {
       // getRoomId(mode, boardSize, winLength, myChar)
       const res = await fetch("http://localhost:5000/roomId", {
         method: 'POST',
@@ -116,12 +116,11 @@ const GameMode = ({ classes }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          mode, boardSize, winLength, myChar
+          mode, boardSize, winLength, myChar, username
         })
       });
       const id = await res.json();
       setRoomId(id);
-      console.log(mode, roomId)
     }
   }
 
