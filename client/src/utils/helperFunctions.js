@@ -24,6 +24,5 @@ export const convertPlayersObjToArray = (players, username) => {
       [playerNames[0]]: players[playerNames[0]],
     };
   }
-  console.log(modifiedPlayers)
   return modifiedPlayers;
 };

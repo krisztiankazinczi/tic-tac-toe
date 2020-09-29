@@ -5,12 +5,18 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 const { v4: uuidv4 } = require("uuid");
 
-const { isFieldReserved, correctPlayerMove, changeOnTurn } = require('./utils/placeMarkChecks');
-const { 
+const {
+  isFieldReserved,
+  correctPlayerMove,
+  changeOnTurn,
+} = require("./utils/placeMarkChecks");
+const {
   checkVictoryLength5,
   checkVictoryLength4,
-  checkVictoryLength3
- } = require('./utils/victoryChecks');
+  checkVictoryLength3,
+} = require("./utils/victoryChecks");
+
+const { updateScoreOnGiveUp } = require("./utils/gamePropertyUpdates");
 
 const app = express();
 
@@ -148,28 +154,75 @@ io.on("connection", (socket) => {
   });
 
   socket.on("place-mark", (roomId, mode, username, rowId, colId, char) => {
-    const correctPlayer = correctPlayerMove(games[mode][roomId].onTurn, username)
+    const correctPlayer = correctPlayerMove(
+      games[mode][roomId].onTurn,
+      username
+    );
     if (!correctPlayer) {
-      io.sockets.in(roomId).emit("error-to-specific-user", "It's not your turn", username);
+      io.sockets
+        .in(roomId)
+        .emit("error-to-specific-user", "It's not your turn", username);
       // socket.emit("other-player-turn", "It's not your turn", username);
       //why is this socket.emit not working????
-      return
+      return;
     }
     const reserved = isFieldReserved(games[mode][roomId].board, rowId, colId);
     if (reserved) {
-      return
+      io.sockets
+        .in(roomId)
+        .emit(
+          "error-to-specific-user",
+          "This field is not free. Select an other one.",
+          username
+        );
+      return;
     }
-    games[mode][roomId].board[rowId][colId] = char
-    
-    const winner = checkVictoryLength5(games[mode][roomId].board, char)
+    games[mode][roomId].board[rowId][colId] = char;
+
+    const winner = checkVictoryLength3(games[mode][roomId].board, char);
     if (winner) {
-      io.sockets.in(roomId).emit("victory", "gyozelem")
-      return
+      io.sockets.in(roomId).emit("victory", rowId, colId, char, "gyozelem");
+      return;
     }
-    
-    games[mode][roomId].onTurn = changeOnTurn(games[mode][roomId].onTurn, games[mode][roomId].players)
-    io.sockets.in(roomId).emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn)
-  })
+
+    games[mode][roomId].onTurn = changeOnTurn(
+      games[mode][roomId].onTurn,
+      games[mode][roomId].players
+    );
+    io.sockets
+      .in(roomId)
+      .emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn);
+  });
+
+  socket.on("draw-game", (roomId, mode) => {
+    games[mode][roomId].players["Tie"].score += 1;
+    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players);
+  });
+
+  socket.on("give-up-game", (roomId, mode, username) => {
+    games[mode][roomId].players = updateScoreOnGiveUp(
+      games[mode][roomId].players,
+      username
+    );
+    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players);
+  });
+
+  socket.on("rematch", (roomId, mode) => {
+    const generatedBoard = Array(10)
+      .fill()
+      .map(() => Array(10).fill(""));
+
+    games[mode][roomId].board = generatedBoard;
+
+    io.sockets
+      .in(roomId)
+      .emit(
+        "get-initial-data",
+        games[mode][roomId].players,
+        games[mode][roomId].board,
+        games[mode][roomId].onTurn
+      );
+  });
 
   socket.on("disconnect", () => {
     // console.log(`user ${socket.id} disconnected`);

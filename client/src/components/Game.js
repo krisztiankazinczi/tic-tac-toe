@@ -65,6 +65,7 @@ const Game = ({ classes }) => {
   const [playersInfo, setPlayersInfo] = useState(null);
   const [onTurn, setOnTurn] = useState("");
   const [char, setChar] = useState('');
+  const [gameEnd, setGameEnd] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -73,6 +74,8 @@ const Game = ({ classes }) => {
     socket.emit("join-room", roomId, mode, username);
 
     socket.on("get-initial-data", (playerInfo, board, onTurn) => {
+      setLoading(true)
+      setGameEnd(false)
       setChar(playerInfo[username].character);
       const convertedPlayersInfo = convertPlayersObjToArray(playerInfo, username);
       setPlayersInfo(convertedPlayersInfo);
@@ -82,15 +85,14 @@ const Game = ({ classes }) => {
         // I had to do this, because offsetWidth value was undefined in 1 player, because the first get the values earlier
         setLoading(false);
         if (boardRef.current) {
-          console.log(boardRef.current.offsetWidth)
           setWidth(boardRef.current.offsetWidth);
         }
       }, 1000)
     });
 
-    socket.on("placed-mark", (rowId, colId, value, onTurn) => {
+    socket.on("placed-mark", (rowId, colId, char, onTurn) => {
       const updatedBoard = [...board]
-      updatedBoard[rowId][colId] = value;
+      updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);
       setOnTurn(onTurn)
     })
@@ -101,8 +103,18 @@ const Game = ({ classes }) => {
       }
     })
 
-    socket.on("victory", (msg) => {
+    socket.on("victory", (rowId, colId, char, msg) => {
+      const updatedBoard = [...board]
+      updatedBoard[rowId][colId] = char;
+      setBoard(updatedBoard);
+      setGameEnd(true)
       console.log(msg);
+    });
+
+    socket.on("game-ended", (players) => {
+      const convertedPlayersInfo = convertPlayersObjToArray(players, username);
+      setPlayersInfo(convertedPlayersInfo);
+      setGameEnd(true)
     })
 
     if (!board) {
@@ -110,13 +122,40 @@ const Game = ({ classes }) => {
     }
 
     return () => socket.disconnect();
-  }, [board]);
+  }, [board, username]);
+  // can I do this without the board in the dependancy array?
 
   const placeMark = (rowId, colId, char) => {
-    console.log(rowId, colId, char)
+    if (onTurn !== username) return
+    if (board[rowId][colId] !== "") return
+    if (gameEnd) return;
+
     const socket = socketIOClient(serverUrl);
     socket.emit("place-mark", roomId, mode, username, rowId, colId, char);
   };
+
+  const newGame = () => {
+    // on dialog we the new game options can be selected
+    const socket = socketIOClient(serverUrl);
+    socket.emit("rematch", roomId, mode);
+  }
+
+  const leaveGame = () => {
+    // dialog to confirm the exit
+    // Redirect to "/"
+    // stop the game on opponent -> show in dialog and suggest exit
+  }
+
+  const draw = () => {
+    const socket = socketIOClient(serverUrl);
+    socket.emit("draw-game", roomId, mode);
+  }
+
+  const giveUp = () => {
+    // dialog to confirm
+    const socket = socketIOClient(serverUrl);
+    socket.emit("give-up-game", roomId, mode, username);
+  }
 
   const containerWidth = {
     width: `${width}px`,
@@ -134,15 +173,29 @@ const Game = ({ classes }) => {
     <div className={classes.container}>
       <div ref={boardRef} className={classes.centerToMiddle}>
         <div className={classes.buttons} style={containerWidth}>
-          <Button style={fontSize} variant="outlined" color="primary">
-            Give up
-          </Button>
-          <Button style={fontSize} variant="outlined" color="primary">
-            Draw?
-          </Button>
-          <Button style={fontSize} variant="outlined" color="primary">
-            Leave Game
-          </Button>
+          {!gameEnd ? (
+            <div className={classes.buttons} style={containerWidth}>
+              <Button onClick={() => giveUp()} style={fontSize} variant="outlined" color="primary">
+                Give up
+              </Button>
+              <Button onClick={() => draw()} style={fontSize} variant="outlined" color="primary">
+                Draw?
+              </Button>
+              <Button onCLick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
+                Leave Game
+              </Button>
+            </div>
+          ) : (
+            <div className={classes.buttons} style={containerWidth}>
+              <Button onClick={() => newGame()} style={fontSize} variant="outlined" color="primary">
+                Rematch
+              </Button>
+              <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
+                Leave Game
+              </Button>
+            </div>
+          )}
+          
         </div>
         <Board width={width} board={board} placeMark={placeMark} char={char} />
         <div className={classes.playerInfo} style={containerWidth}>

@@ -75,7 +75,6 @@ const WaitingRoom = ({ classes }) => {
     });
 
     socket.on("player-ready", (players) => {
-      console.log(players)
       setPlayers(players)
       Object.entries(players).forEach(([player, values]) => {
         if (values.ready === true) {
