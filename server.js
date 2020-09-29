@@ -5,6 +5,13 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 const { v4: uuidv4 } = require("uuid");
 
+const { isFieldReserved, correctPlayerMove, changeOnTurn } = require('./utils/placeMarkChecks');
+const { 
+  checkVictoryLength5,
+  checkVictoryLength4,
+  checkVictoryLength3
+ } = require('./utils/victoryChecks');
+
 const app = express();
 
 const server = require("http").Server(app);
@@ -63,7 +70,7 @@ let games = {
 };
 
 io.on("connection", (socket) => {
-  console.log("User connected " + socket.id);
+  // console.log("User connected " + socket.id);
   // socket.on("get-roomId", (mode, boardSize, winLength, myChar, username) => {
   //   const roomId = uuidv4();
   //     games[mode][roomId] = {};
@@ -140,14 +147,32 @@ io.on("connection", (socket) => {
       );
   });
 
-  socket.on("place-mark", (roomId, mode, username, rowId, colId, value) => {
-    games[mode][roomId].board[rowId][colId] = value
-    console.log(games[mode][roomId].board);
-    io.sockets.in(roomId).emit("placed-mark", rowId, colId, value)
+  socket.on("place-mark", (roomId, mode, username, rowId, colId, char) => {
+    const correctPlayer = correctPlayerMove(games[mode][roomId].onTurn, username)
+    if (!correctPlayer) {
+      io.sockets.in(roomId).emit("error-to-specific-user", "It's not your turn", username);
+      // socket.emit("other-player-turn", "It's not your turn", username);
+      //why is this socket.emit not working????
+      return
+    }
+    const reserved = isFieldReserved(games[mode][roomId].board, rowId, colId);
+    if (reserved) {
+      return
+    }
+    games[mode][roomId].board[rowId][colId] = char
+    
+    const winner = checkVictoryLength5(games[mode][roomId].board, char)
+    if (winner) {
+      io.sockets.in(roomId).emit("victory", "gyozelem")
+      return
+    }
+    
+    games[mode][roomId].onTurn = changeOnTurn(games[mode][roomId].onTurn, games[mode][roomId].players)
+    io.sockets.in(roomId).emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn)
   })
 
   socket.on("disconnect", () => {
-    console.log(`user ${socket.id} disconnected`);
+    // console.log(`user ${socket.id} disconnected`);
   });
 });
 
@@ -157,33 +182,3 @@ app.get("*", (req, res) => {
 });
 
 server.listen(port, () => console.log(`App is running on port: ${port}`));
-
-const convertPlayersObjToArray = (players, username) => {
-  // the order of players will be for everyone: 1. the player itself, 2. Tie, 3. the opponent
-  const modifiedPlayers = [];
-
-  const playerNames = Object.keys(players);
-  
-  // it's always the Tie key and value
-  modifiedPlayers[1] = {
-    [playerNames[2]]: players['Tie'],
-  };
-
-  if (playerNames[0] === username) {
-    modifiedPlayers[0] = {
-      [playerNames[0]]: players[playerNames[0]],
-    };
-    modifiedPlayers[2] = {
-      [playerNames[1]]: players[playerNames[1]],
-    };
-  } else if (playerNames[0] !== username) {
-    modifiedPlayers[0] = {
-      [playerNames[1]]: players[playerNames[1]],
-    };
-    modifiedPlayers[2] = {
-      [playerNames[0]]: players[playerNames[0]],
-    };
-  }
-  console.log(modifiedPlayers)
-  return modifiedPlayers;
-};

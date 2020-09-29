@@ -88,10 +88,21 @@ const Game = ({ classes }) => {
       }, 1000)
     });
 
-    socket.on("placed-mark", (rowId, colId, value) => {
+    socket.on("placed-mark", (rowId, colId, value, onTurn) => {
       const updatedBoard = [...board]
       updatedBoard[rowId][colId] = value;
       setBoard(updatedBoard);
+      setOnTurn(onTurn)
+    })
+
+    socket.on("error-to-specific-user", (errorMessage, user) => {
+      if (user === username) {
+        console.log(errorMessage)
+      }
+    })
+
+    socket.on("victory", (msg) => {
+      console.log(msg);
     })
 
     if (!board) {
@@ -101,23 +112,11 @@ const Game = ({ classes }) => {
     return () => socket.disconnect();
   }, [board]);
 
-  const placeMark = (rowId, colId, value) => {
+  const placeMark = (rowId, colId, char) => {
+    console.log(rowId, colId, char)
     const socket = socketIOClient(serverUrl);
-    socket.emit("place-mark", roomId, mode, username, rowId, colId, value);
+    socket.emit("place-mark", roomId, mode, username, rowId, colId, char);
   };
-
-  // const getMyCharacter = () => {
-  //   // console.log(playersInfo[0][username].character)
-  //   const myProps = playersInfo.find(playerName => {
-  //     console.log(playerName)
-  //     // console.log(Object.keys(playerName)[username], username)
-  //    return Object.keys(playerName)[username] === username
-  //   }) 
-  //   console.log(myProps)
-  //   if (myProps !== undefined) {
-  //     return myProps.character
-  //   }
-  // }
 
   const containerWidth = {
     width: `${width}px`,
