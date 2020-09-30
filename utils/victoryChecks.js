@@ -105,6 +105,7 @@ const checkVictoryLength4 = (board, char) => {
 };
 
 const checkVictoryLength3 = (board, char) => {
+  console.log(board)
   let winner;
   for (let i = 0; i < board.length; i++) {
     for (let j = 0; j < board[i].length; j++) {

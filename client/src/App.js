@@ -8,6 +8,8 @@ import StartPage from "./components/StartPage";
 import WaitingRoom from "./components/WaitingRoom";
 // import WaitingRoom1 from "./components/WaitingRoom1";
 
+import ModalTest from "./components/ModalTest";
+
 
 const App = () => {
   return (
@@ -18,6 +20,7 @@ const App = () => {
         <Route exact path="/waitingRoom/:mode/:roomId" component={WaitingRoom} />
         {/* <Route exact path="/waitingRoom/:mode/:roomId" component={WaitingRoom1} /> */}
         <Route exact path="/game/:mode/:roomId" component={Game} />
+        <Route exact path="/modals" component={ModalTest} />
 
       </Switch>
     </Router>

@@ -51,8 +51,14 @@ app.post("/roomId", (req, res) => {
   games[mode][roomId] = {};
   games[mode][roomId].boardSize = boardSize;
   games[mode][roomId].winLength = winLength;
-  // games[mode][roomId].characters = {[username]: myChar};
-  games[mode][roomId].players = {
+  games[mode][roomId].winCheck =
+    parseInt(winLength) === 5
+      ? checkVictoryLength5
+      : parseInt(winLength) === 4
+      ? checkVictoryLength4
+      : checkVictoryLength3;
+
+      games[mode][roomId].players = {
     [username]: {
       character: myChar,
       ready: false,
@@ -142,6 +148,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("get-game-data", (roomId, mode, username) => {
+    //socket.emit not working for some reason.....
     // validation
     io.sockets
       .in(roomId)
@@ -149,7 +156,8 @@ io.on("connection", (socket) => {
         "get-initial-data",
         games[mode][roomId].players,
         games[mode][roomId].board,
-        games[mode][roomId].onTurn
+        games[mode][roomId].onTurn,
+        games[mode][roomId].winLength,
       );
   });
 
@@ -179,7 +187,7 @@ io.on("connection", (socket) => {
     }
     games[mode][roomId].board[rowId][colId] = char;
 
-    const winner = checkVictoryLength3(games[mode][roomId].board, char);
+    const winner = games[mode][roomId].winCheck(games[mode][roomId].board, char);
     if (winner) {
       io.sockets.in(roomId).emit("victory", rowId, colId, char, "gyozelem");
       return;
@@ -220,7 +228,8 @@ io.on("connection", (socket) => {
         "get-initial-data",
         games[mode][roomId].players,
         games[mode][roomId].board,
-        games[mode][roomId].onTurn
+        games[mode][roomId].onTurn,
+        games[mode][roomId].winLength,
       );
   });
 

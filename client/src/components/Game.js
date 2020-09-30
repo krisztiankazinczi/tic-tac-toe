@@ -7,6 +7,7 @@ import Button from "@material-ui/core/Button";
 
 import Board from "./Game/Board";
 import PlayerName from "./Game/PlayerName";
+import Error from './ModalInfo/Error';
 
 import socketIOClient from "socket.io-client";
 
@@ -62,10 +63,12 @@ const Game = ({ classes }) => {
   const [width, setWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState(null);
+  const [winLength, setWinLength] = useState(0);
   const [playersInfo, setPlayersInfo] = useState(null);
   const [onTurn, setOnTurn] = useState("");
   const [char, setChar] = useState('');
   const [gameEnd, setGameEnd] = useState(false);
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!username) return;
@@ -73,10 +76,11 @@ const Game = ({ classes }) => {
     const socket = socketIOClient(serverUrl);
     socket.emit("join-room", roomId, mode, username);
 
-    socket.on("get-initial-data", (playerInfo, board, onTurn) => {
+    socket.on("get-initial-data", (playerInfo, board, onTurn, winLength) => {
       setLoading(true)
       setGameEnd(false)
       setChar(playerInfo[username].character);
+      setWinLength(winLength);
       const convertedPlayersInfo = convertPlayersObjToArray(playerInfo, username);
       setPlayersInfo(convertedPlayersInfo);
       setBoard(board);
@@ -99,7 +103,7 @@ const Game = ({ classes }) => {
 
     socket.on("error-to-specific-user", (errorMessage, user) => {
       if (user === username) {
-        console.log(errorMessage)
+        setError(errorMessage)
       }
     })
 
@@ -126,8 +130,8 @@ const Game = ({ classes }) => {
   // can I do this without the board in the dependancy array?
 
   const placeMark = (rowId, colId, char) => {
-    if (onTurn !== username) return
-    if (board[rowId][colId] !== "") return
+    // if (onTurn !== username) return
+    // if (board[rowId][colId] !== "") return
     if (gameEnd) return;
 
     const socket = socketIOClient(serverUrl);
@@ -167,6 +171,12 @@ const Game = ({ classes }) => {
 
   if (loading) {
     return <div>Loading</div>;
+  }
+
+  if (error) {
+    return (
+      <Error message={error} setError={setError} />
+    )
   }
 
   return (
