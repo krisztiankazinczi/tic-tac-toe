@@ -86,6 +86,12 @@ const GameMode = ({ classes }) => {
   const [roomId, setRoomId] = useState("");
   // const { getRoomId, roomId, loadingData} = useSocket();
 
+  useEffect(() => {
+    if (boardSize < winLength) {
+      setBoardSize(winLength);
+    }
+  }, [boardSize, winLength])
+
   if (!username) {
     return <Redirect to="/" />;
   }
@@ -160,6 +166,25 @@ const GameMode = ({ classes }) => {
   if (mode) {
     return (
       <div className={classes.centerToMiddle}>
+          <div className={classes.options}>
+            <h2>Win Length</h2>
+            <Select
+              name="winLength"
+              value={winLength}
+              onChange={(e) => setWinLength(e.target.value)}
+              className={classes.dropDown}
+              inputProps={{classes: {
+                icon: classes.icon
+              }}}
+            >
+              {winLengths.map((length) => (
+                  <MenuItem key={length} className={classes.menuItem} value={length}>
+                    {length}
+                  </MenuItem>
+                )
+              )}
+            </Select>
+          </div>
       <div className={classes.options}>
         <h2>BoardSize (X * X)</h2>
         <Select
@@ -171,33 +196,19 @@ const GameMode = ({ classes }) => {
             icon: classes.icon
           }}}
         >
-          {boardSizes.map((size) => (
-            <MenuItem key={size} className={classes.menuItem} value={size}>
-              {size}
-            </MenuItem>
-          ))}
-        </Select>
-      </div>
-      <div className={classes.options}>
-        <h2>Win Length</h2>
-        <Select
-          name="winLength"
-          value={winLength}
-          onChange={(e) => setWinLength(e.target.value)}
-          className={classes.dropDown}
-          inputProps={{classes: {
-            icon: classes.icon
-          }}}
-        >
-          {winLengths.map((length) => (
-            <MenuItem key={length} className={classes.menuItem} value={length}>
-              {length}
-            </MenuItem>
-          ))}
+          {boardSizes.map((size) => 
+            {
+              return size >= winLength && (
+                <MenuItem key={size} className={classes.menuItem} value={size}>
+                  {size}
+                </MenuItem>
+              )
+            }
+          )}
         </Select>
       </div>
         <div className={classes.options}>
-          <h2>Your character</h2>
+          <h2>Your Character</h2>
           <Select
             name="myChar"
             value={myChar}
