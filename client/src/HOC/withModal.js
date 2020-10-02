@@ -27,11 +27,14 @@ const centerStyle = {
 
 const withModal = (Info) => props => {
   const [open, setOpen] = useState(true);
+  const { buttonNeeded, timeLimit } = props
 
   useEffect(() => {
-    setTimeout(() => {
-      setOpen(false)
-    }, 2000)
+    if (timeLimit) {
+      setTimeout(() => {
+        setOpen(false)
+      }, (timeLimit * 1000))
+    }
   }, [])
 
   return (
@@ -43,10 +46,12 @@ const withModal = (Info) => props => {
       maxWidth="sm"
     >
       <DialogActions style={dialogActionsStyle}>
-        <Info style={centerStyle} {...props} />
-        <Button onClick={() => setOpen(false)} style={centerStyle} color="secondary">
-          Understand
-        </Button>
+        <Info style={centerStyle} setOpen={setOpen} {...props} />
+        {buttonNeeded && (
+          <Button onClick={() => setOpen(false)} style={centerStyle} color="secondary">
+            Understand
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Redirect } from "react-router-dom";
 import withStyles from "@material-ui/core/styles/withStyles";
 import clsx from "clsx";
 import { useAuth } from "../store/authProvider";
@@ -8,6 +8,7 @@ import Button from "@material-ui/core/Button";
 import Board from "./Game/Board";
 import PlayerName from "./Game/PlayerName";
 import Error from './ModalInfo/Error';
+import Confirmation from './ModalInfo/Confirmation';
 
 import socketIOClient from "socket.io-client";
 
@@ -68,7 +69,13 @@ const Game = ({ classes }) => {
   const [onTurn, setOnTurn] = useState("");
   const [char, setChar] = useState('');
   const [gameEnd, setGameEnd] = useState(false);
-  const [info, setInfo] = useState("")
+  const [info, setInfo] = useState("");
+  const [exit, setExit] = useState({
+    state: false,
+    question: "Are you sure you want to leave this page?",
+    confirm: false
+  });
+
 
   useEffect(() => {
     if (!username) return;
@@ -153,6 +160,8 @@ const Game = ({ classes }) => {
   }
 
   const leaveGame = () => {
+    setExit({question: exit.question, state: true, confirm: false})
+    console.log(exit)
     // dialog to confirm the exit
     // Redirect to "/"
     // stop the game on opponent -> show in dialog and suggest exit
@@ -181,9 +190,22 @@ const Game = ({ classes }) => {
     return <div>Loading</div>;
   }
 
+  if (exit.state) {
+    console.log('bejut ide?')
+    return (
+      <Confirmation question={exit.question} confirmation={exit} setConfirmation={setExit} />
+    )
+  }
+
+  if (exit.confirm) {
+    return (
+      <Redirect to="/" />
+    )
+  }
+
   if (info) {
     return (
-      <Error message={info} setError={setInfo} />
+      <Error message={info} setError={setInfo} buttonNeeded timeLimit={2} />
     )
   }
 
@@ -199,7 +221,7 @@ const Game = ({ classes }) => {
               <Button onClick={() => draw()} style={fontSize} variant="outlined" color="primary">
                 Draw?
               </Button>
-              <Button onCLick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
+              <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
                 Leave Game
               </Button>
             </div>

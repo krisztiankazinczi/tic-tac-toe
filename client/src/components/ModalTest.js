@@ -1,12 +1,12 @@
 import React from 'react';
 import withModal from '../HOC/withModal';
 import Error from './ModalInfo/Error';
+import Confirmation from './ModalInfo/Confirmation'
 
 function ModalTest() {
-  const ErrorMessage = withModal(Error)
   return (
     <div>
-      <Error message="what is the problem. please tell me moreasasdgasdgsdagasd" />
+      <Confirmation question="what is the problem. please tell me moreasasdgasdgsdagasd" />
     </div>
   )
 }
