@@ -24,7 +24,7 @@ const checkVictoryLength5 = (board, char) => {
           winner = true;
         }
       }
-      if (j - 4 < board.length && i + 4 > 0) {
+      if (j - 4 >= 0 && i + 4 < board.length) {
         if (
           board[i][j] === char &&
           board[i + 1][j - 1] === char &&
@@ -77,7 +77,7 @@ const checkVictoryLength4 = (board, char) => {
           winner = true;
         }
       }
-      if (j - 3 < board.length && i + 3 > 0) {
+      if (j - 3 >= 0 && i + 3 < board.length) {
         if (
           board[i][j] === char &&
           board[i + 1][j - 1] === char &&
@@ -105,7 +105,6 @@ const checkVictoryLength4 = (board, char) => {
 };
 
 const checkVictoryLength3 = (board, char) => {
-  console.log(board)
   let winner;
   for (let i = 0; i < board.length; i++) {
     for (let j = 0; j < board[i].length; j++) {
@@ -127,7 +126,7 @@ const checkVictoryLength3 = (board, char) => {
           winner = true;
         }
       }
-      if (j - 2 < board.length && i + 2 > 0) {
+      if (j - 2 >= 0 && i + 2 < board.length) {
         if (
           board[i][j] === char &&
           board[i + 1][j - 1] === char &&

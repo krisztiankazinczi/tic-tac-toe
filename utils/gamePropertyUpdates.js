@@ -6,9 +6,14 @@ const updateScoreOnGiveUp = (players, usernameGaveUp) => {
     }
   });
   return players;
-}
+};
 
+const updateScoreOnVictory = (players, username) => {
+  players[username].score += 1;
+  return players;
+};
 
 module.exports = {
-  updateScoreOnGiveUp
-}
+  updateScoreOnGiveUp,
+  updateScoreOnVictory,
+};

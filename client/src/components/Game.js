@@ -68,7 +68,7 @@ const Game = ({ classes }) => {
   const [onTurn, setOnTurn] = useState("");
   const [char, setChar] = useState('');
   const [gameEnd, setGameEnd] = useState(false);
-  const [error, setError] = useState("")
+  const [info, setInfo] = useState("")
 
   useEffect(() => {
     if (!username) return;
@@ -103,16 +103,18 @@ const Game = ({ classes }) => {
 
     socket.on("error-to-specific-user", (errorMessage, user) => {
       if (user === username) {
-        setError(errorMessage)
+        setInfo(errorMessage)
       }
     })
 
-    socket.on("victory", (rowId, colId, char, msg) => {
+    socket.on("victory", (rowId, colId, char, msg, players) => {
       const updatedBoard = [...board]
       updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);
       setGameEnd(true)
-      console.log(msg);
+      setInfo(msg)
+      const convertedPlayersInfo = convertPlayersObjToArray(players, username);
+      setPlayersInfo(convertedPlayersInfo);
     });
 
     socket.on("game-ended", (players) => {
@@ -130,8 +132,14 @@ const Game = ({ classes }) => {
   // can I do this without the board in the dependancy array?
 
   const placeMark = (rowId, colId, char) => {
-    // if (onTurn !== username) return
-    // if (board[rowId][colId] !== "") return
+    if (onTurn !== username) {
+      setInfo("It's not your turn, please wait!")
+      return
+    } 
+    if (board[rowId][colId] !== "")  {
+      setInfo("This field is not empty, please select an other one!")
+      return
+    }
     if (gameEnd) return;
 
     const socket = socketIOClient(serverUrl);
@@ -173,9 +181,9 @@ const Game = ({ classes }) => {
     return <div>Loading</div>;
   }
 
-  if (error) {
+  if (info) {
     return (
-      <Error message={error} setError={setError} />
+      <Error message={info} setError={setInfo} />
     )
   }
 

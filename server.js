@@ -16,7 +16,7 @@ const {
   checkVictoryLength3,
 } = require("./utils/victoryChecks");
 
-const { updateScoreOnGiveUp } = require("./utils/gamePropertyUpdates");
+const { updateScoreOnGiveUp, updateScoreOnVictory } = require("./utils/gamePropertyUpdates");
 
 const app = express();
 
@@ -169,8 +169,7 @@ io.on("connection", (socket) => {
     if (!correctPlayer) {
       io.sockets
         .in(roomId)
-        .emit("error-to-specific-user", "It's not your turn", username);
-      // socket.emit("other-player-turn", "It's not your turn", username);
+        .emit("error-to-specific-user", "It's not your turn, please wait!", username);
       //why is this socket.emit not working????
       return;
     }
@@ -180,7 +179,7 @@ io.on("connection", (socket) => {
         .in(roomId)
         .emit(
           "error-to-specific-user",
-          "This field is not free. Select an other one.",
+          "This field is not empty, please select an other one!",
           username
         );
       return;
@@ -189,7 +188,11 @@ io.on("connection", (socket) => {
 
     const winner = games[mode][roomId].winCheck(games[mode][roomId].board, char);
     if (winner) {
-      io.sockets.in(roomId).emit("victory", rowId, colId, char, "gyozelem");
+      games[mode][roomId].players = updateScoreOnVictory(
+        games[mode][roomId].players,
+        username
+      );
+      io.sockets.in(roomId).emit("victory", rowId, colId, char, `${username} has won the game. Congrats!`, games[mode][roomId].players);
       return;
     }
 

@@ -5,8 +5,7 @@ import withModal from '../../HOC/withModal';
 const msgStyle = {
   fontSize: '25px',
   width: '70%',
-  display: 'flex',
-  alignItems: 'center',
+  textAlign: 'center'
 }
 
 const Error = ({ message, setError }) => {
