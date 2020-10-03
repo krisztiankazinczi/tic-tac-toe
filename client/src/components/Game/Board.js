@@ -1,21 +1,11 @@
-import React, { useState, useEffect } from "react";
-import withStyles from "@material-ui/core/styles/withStyles";
+import React from "react";
 
 import Row from "./Row";
 
 const SIZE_CORRECTION = 0.6;
 
-const styles = (theme) => ({
-  ...theme.styles,
-  board: {
-    width: "400px",
-    height: "400px",
-  },
-});
-
-function Board({ classes, width, board, placeMark, char }) {
-  // const [board, setBoard] = useState(null);
-
+function Board({ width, board, placeMark, char }) {
+  console.log(width)
   const boardSize = {
     width: `${width}px`,
     height: `${width * SIZE_CORRECTION}px`,
@@ -42,4 +32,4 @@ function Board({ classes, width, board, placeMark, char }) {
   );
 }
 
-export default withStyles(styles)(Board);
+export default Board;
