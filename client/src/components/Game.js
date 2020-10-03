@@ -199,8 +199,6 @@ const Game = ({ classes }) => {
     });
 
     socket.on("placed-mark", (rowId, colId, char, onTurn) => {
-      console.log(board);
-      console.log(rowId, colId, char, onTurn)
       const updatedBoard = [...board];
       updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);

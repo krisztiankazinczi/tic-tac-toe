@@ -78,7 +78,8 @@ const styles = (theme) => ({
   buttonContainer: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-around'
+    justifyContent: 'space-around',
+    width: '100%'
   }
 });
 
@@ -179,7 +180,6 @@ const NewGameOptions = ({
         </Select>
       </div>
       {character && (
-        <div>
           <div className={classes.options}>
             <h2>Your Character</h2>
             <Select
@@ -200,7 +200,6 @@ const NewGameOptions = ({
               ))}
             </Select>
           </div>
-        </div>
       )}
 
       <div className={classes.buttonContainer}>
