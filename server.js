@@ -21,7 +21,8 @@ const {
   updateScoreOnGiveUp,
   updateScoreOnVictory, 
   updateScoreOnDraw,
-  checkIfEveryoneLeftGame
+  checkIfEveryoneLeftGame,
+  getOpponentName
 } = require("./utils/gamePropertyUpdates");
 
 const app = express();
@@ -222,9 +223,25 @@ io.on("connection", (socket) => {
 
   });
 
-  socket.on("draw-game", (roomId, mode) => {
-    games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
-    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players);
+  socket.on("draw-game-offer", (roomId, mode, username) => {
+    io.sockets.in(roomId).emit("draw-confirmation", `${username} would like a draw match. Will you accept that?`, username)
+
+  })
+
+  socket.on("draw-game", (roomId, mode, acceptance, username) => {
+    if (acceptance === 'YES') {
+      games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
+      io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players, "The game has been draw.");
+      return;
+    } else {
+      io.sockets
+      .in(roomId)
+      .emit(
+        "error-to-specific-user",
+        `${username} has not accepted your draw request.`,
+        getOpponentName(games[mode][roomId].players, username)
+      );
+    }
   });
 
   socket.on("give-up-game", (roomId, mode, username) => {

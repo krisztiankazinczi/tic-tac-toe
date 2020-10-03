@@ -9,6 +9,7 @@ import Board from "./Game/Board";
 import PlayerName from "./Game/PlayerName";
 import Error from './ModalInfo/Error';
 import Confirmation from './ModalInfo/Confirmation';
+import ConfirmationWithTwoOption from './ModalInfo/ConfirmationWithTwoOption';
 
 import socketIOClient from "socket.io-client";
 
@@ -81,6 +82,16 @@ const Game = ({ classes }) => {
     question: "Are you sure you want to give up this game?",
     confirm: false
   });
+  const [draw, setDraw] = useState({
+    state: false,
+    question: "Are you sure you want draw match?",
+    confirm: false
+  });
+  const [drawConfirmation, setDrawConfirmation] = useState({
+    state: false,
+    question: "",
+    confirm: false
+  });
 
   useEffect(() => {
     if (exit.confirm) {
@@ -93,7 +104,22 @@ const Game = ({ classes }) => {
       socket.emit("give-up-game", roomId, mode, username);
       setGiveUp({ ...giveUp, confirm: false });
     }
-  }, [exit, giveUp]);
+
+    if (draw.confirm) {
+      const socket = socketIOClient(serverUrl);
+      socket.emit("draw-game-offer", roomId, mode, username);
+      setGiveUp({ ...draw, confirm: false });
+    }
+
+    if (drawConfirmation.confirm) {
+      console.log(drawConfirmation)
+      const socket = socketIOClient(serverUrl);
+      socket.emit("draw-game", roomId, mode, drawConfirmation.confirm, username);
+      setDrawConfirmation({ ...drawConfirmation, confirm: false, question: "" });
+    }
+
+
+  }, [exit, giveUp, draw, drawConfirmation]);
 
   useEffect(() => {
     if (!username) return;
@@ -157,6 +183,12 @@ const Game = ({ classes }) => {
       setOpponentLeft(true)
     })
 
+    socket.on("draw-confirmation", (message, requestUser) => {
+      if (requestUser !== username) {
+        setDrawConfirmation({ ...drawConfirmation, state: true, question: message })
+      }
+    })
+
     if (!board) {
       socket.emit("get-game-data", roomId, mode, username);
     }
@@ -196,16 +228,12 @@ const Game = ({ classes }) => {
     // event trigger happens in a useEffect, when the player confirmed the leave
   }
 
-  const draw = () => {
-    const socket = socketIOClient(serverUrl);
-    socket.emit("draw-game", roomId, mode);
+  const drawGame = () => {
+    setDraw({ ...draw, state: true });
   }
 
   const givingUp = () => {
     setGiveUp({ ...giveUp, state: true })
-    // dialog to confirm
-    // const socket = socketIOClient(serverUrl);
-    // socket.emit("give-up-game", roomId, mode, username);
   }
 
   const containerWidth = {
@@ -222,13 +250,25 @@ const Game = ({ classes }) => {
 
   if (exit.state) {
     return (
-      <Confirmation question={exit.question} confirmation={exit} setConfirmation={setExit} />
+      <Confirmation confirmation={exit} setConfirmation={setExit} />
     )
   }
 
   if (giveUp.state) {
     return (
-      <Confirmation question={giveUp.question} confirmation={giveUp} setConfirmation={setGiveUp} />
+      <Confirmation confirmation={giveUp} setConfirmation={setGiveUp} />
+    )
+  }
+
+  if (draw.state) {
+    return (
+      <Confirmation confirmation={draw} setConfirmation={setDraw} />
+    )
+  }
+
+  if (drawConfirmation.state === true) {
+    return (
+      <ConfirmationWithTwoOption  confirmation={drawConfirmation} setConfirmation={setDrawConfirmation} />
     )
   }
 
@@ -253,7 +293,7 @@ const Game = ({ classes }) => {
               <Button onClick={() => givingUp()} style={fontSize} variant="outlined" color="primary">
                 Give up
               </Button>
-              <Button onClick={() => draw()} style={fontSize} variant="outlined" color="primary">
+              <Button onClick={() => drawGame()} style={fontSize} variant="outlined" color="primary">
                 Draw?
               </Button>
               <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">

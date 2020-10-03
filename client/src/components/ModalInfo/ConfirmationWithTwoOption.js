@@ -22,22 +22,26 @@ const button = {
   fontSize: '25px'
 }
 
-const Confirmation = ({ confirmation, setConfirmation, setOpen }) => {
+const ConfirmationWithTwoOption = ({ confirmation, setConfirmation, setOpen }) => {
 
   useEffect(() => {
     return () => {
-      setConfirmation({...confirmation, state: false})
-      setOpen(false)
+      if (!confirmation.confirm) {
+        setConfirmation({...confirmation, state: false, confirm: 'NO'})
+        setOpen(false)
+      }
     }
   })
 
-  const cancel = () => {
-    setConfirmation({...confirmation, state: false})
+  const refuse = () => {
+    console.log('refuse')
+    setConfirmation({...confirmation, state: false, confirm: 'NO'})
     setOpen(false)
   }
 
   const accept = () => {
-    setConfirmation({...confirmation, state: false, confirm: true})
+    console.log('accept')
+    setConfirmation({...confirmation, state: false, confirm: 'YES'})
     setOpen(false)
   }
 
@@ -46,22 +50,22 @@ const Confirmation = ({ confirmation, setConfirmation, setOpen }) => {
       <div>{confirmation.question}</div>
       <div style={buttonContainer}>
         <Button
-          onClick={cancel}
+          onClick={refuse}
           style={button}
           color="secondary"
         >
-          Cancel
+          NO
         </Button>
         <Button
           onClick={accept}
           style={button}
           color="primary"
         >
-          OK
+          YES
         </Button>
       </div>
     </div>
   );
 };
 
-export default withModal(Confirmation);
+export default withModal(ConfirmationWithTwoOption);

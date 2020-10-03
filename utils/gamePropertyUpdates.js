@@ -32,9 +32,21 @@ const checkIfEveryoneLeftGame = (players) => {
   return isEveryoneLeftGame;
 };
 
+const getOpponentName = (players, username) => {
+  let opponentName;
+  const playerNames = Object.keys(players);
+  playerNames.forEach((name) => {
+    if (name !== username && name !== "Tie") {
+      opponentName = name;
+    }
+  });
+  return opponentName;
+}
+
 module.exports = {
   updateScoreOnGiveUp,
   updateScoreOnVictory,
   updateScoreOnDraw,
   checkIfEveryoneLeftGame,
+  getOpponentName
 };
