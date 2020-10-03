@@ -14,15 +14,15 @@ const {
   checkVictoryLength5,
   checkVictoryLength4,
   checkVictoryLength3,
-  checkDraw
+  checkDraw,
 } = require("./utils/victoryChecks");
 
-const { 
+const {
   updateScoreOnGiveUp,
-  updateScoreOnVictory, 
+  updateScoreOnVictory,
   updateScoreOnDraw,
   checkIfEveryoneLeftGame,
-  getOpponentName
+  getOpponentName,
 } = require("./utils/gamePropertyUpdates");
 
 const app = express();
@@ -65,12 +65,12 @@ app.post("/roomId", (req, res) => {
       ? checkVictoryLength4
       : checkVictoryLength3;
 
-      games[mode][roomId].players = {
+  games[mode][roomId].players = {
     [username]: {
       character: myChar,
       ready: false,
       score: 0,
-      active: true
+      active: true,
     },
   };
   games[mode][roomId].onTurn = username;
@@ -138,7 +138,7 @@ io.on("connection", (socket) => {
         character: myChar,
         ready: false,
         score: 0,
-        active: true
+        active: true,
       };
     }
 
@@ -167,7 +167,7 @@ io.on("connection", (socket) => {
         games[mode][roomId].players,
         games[mode][roomId].board,
         games[mode][roomId].onTurn,
-        games[mode][roomId].winLength,
+        games[mode][roomId].winLength
       );
   });
 
@@ -179,7 +179,11 @@ io.on("connection", (socket) => {
     if (!correctPlayer) {
       io.sockets
         .in(roomId)
-        .emit("error-to-specific-user", "It's not your turn, please wait!", username);
+        .emit(
+          "error-to-specific-user",
+          "It's not your turn, please wait!",
+          username
+        );
       //why is this socket.emit not working????
       return;
     }
@@ -196,51 +200,102 @@ io.on("connection", (socket) => {
     }
     games[mode][roomId].board[rowId][colId] = char;
 
-    const winner = games[mode][roomId].winCheck(games[mode][roomId].board, char);
+    const winner = games[mode][roomId].winCheck(
+      games[mode][roomId].board,
+      char
+    );
     if (winner) {
       games[mode][roomId].players = updateScoreOnVictory(
         games[mode][roomId].players,
         username
       );
-      io.sockets.in(roomId).emit("victory", rowId, colId, char, `${username} has won the game. Congrats!`, games[mode][roomId].players);
+      io.sockets
+        .in(roomId)
+        .emit(
+          "victory",
+          rowId,
+          colId,
+          char,
+          `${username} has won the game. Congrats!`,
+          games[mode][roomId].players
+        );
       return;
     }
-    
+
     const emptyFieldsLeft = checkDraw(games[mode][roomId].board);
     if (!emptyFieldsLeft) {
-      games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
-      io.sockets.in(roomId).emit("victory", rowId, colId, char, "The game has been draw.", games[mode][roomId].players);
+      games[mode][roomId].players = updateScoreOnDraw(
+        games[mode][roomId].players
+      );
+      io.sockets
+        .in(roomId)
+        .emit(
+          "victory",
+          rowId,
+          colId,
+          char,
+          "The game has been draw.",
+          games[mode][roomId].players
+        );
       return;
     }
 
     games[mode][roomId].onTurn = changeOnTurn(
       games[mode][roomId].onTurn,
       games[mode][roomId].players
-      );
-      io.sockets
+    );
+    io.sockets
       .in(roomId)
       .emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn);
-
   });
 
-  socket.on("draw-game-offer", (roomId, mode, username) => {
-    io.sockets.in(roomId).emit("draw-confirmation", `${username} would like a draw match. Will you accept that?`, username)
+  socket.on("draw-game-offer", (roomId, username) => {
+    io.sockets
+      .in(roomId)
+      .emit(
+        "draw-confirmation",
+        `${username} would like a draw match. Will you accept that?`,
+        username
+      );
+  });
 
-  })
+  socket.on(
+    "new-game-offer",
+    (roomId, username, winLength, boardSize) => {
+
+      io.sockets
+        .in(roomId)
+        .emit(
+          "new-game-confirmation",
+          `${username} would like to play a rematch. Would you like too?`,
+          username, 
+          winLength,
+          boardSize
+        );
+    }
+  );
 
   socket.on("draw-game", (roomId, mode, acceptance, username) => {
-    if (acceptance === 'YES') {
-      games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
-      io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players, "The game has been draw.");
+    if (acceptance === "YES") {
+      games[mode][roomId].players = updateScoreOnDraw(
+        games[mode][roomId].players
+      );
+      io.sockets
+        .in(roomId)
+        .emit(
+          "game-ended",
+          games[mode][roomId].players,
+          "The game has been draw."
+        );
       return;
     } else {
       io.sockets
-      .in(roomId)
-      .emit(
-        "error-to-specific-user",
-        `${username} has not accepted your draw request.`,
-        getOpponentName(games[mode][roomId].players, username)
-      );
+        .in(roomId)
+        .emit(
+          "error-to-specific-user",
+          `${username} has not accepted your draw request.`,
+          getOpponentName(games[mode][roomId].players, username)
+        );
     }
   });
 
@@ -249,35 +304,55 @@ io.on("connection", (socket) => {
       games[mode][roomId].players,
       username
     );
-    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players, `${username} has given up the game.`);
-  });
-
-  socket.on("rematch", (roomId, mode) => {
-    const generatedBoard = Array(10)
-      .fill()
-      .map(() => Array(10).fill(""));
-
-    games[mode][roomId].board = generatedBoard;
-
     io.sockets
       .in(roomId)
       .emit(
-        "get-initial-data",
+        "game-ended",
         games[mode][roomId].players,
-        games[mode][roomId].board,
-        games[mode][roomId].onTurn,
-        games[mode][roomId].winLength,
+        `${username} has given up the game.`
       );
+  });
+
+  socket.on("rematch", (roomId, mode, acceptance, username, winLength, boardSize) => {
+    console.log(username, acceptance)
+    if (acceptance === "YES") {
+      const generatedBoard = Array(boardSize)
+        .fill()
+        .map(() => Array(boardSize).fill(""));
+
+      games[mode][roomId].board = generatedBoard;
+      games[mode][roomId].winLength = winLength;
+      
+      io.sockets
+        .in(roomId)
+        .emit(
+          "get-rematch-data",
+          games[mode][roomId].board,
+          games[mode][roomId].winLength,
+          games[mode][roomId].onTurn,
+        );
+      return;
+    } else {
+      const oppname = getOpponentName(games[mode][roomId].players, username);
+      console.log(oppname);
+      io.sockets
+        .in(roomId)
+        .emit(
+          "error-to-specific-user",
+          `${username} has not accepted your rematch request.`,
+          getOpponentName(games[mode][roomId].players, username)
+        );
+    }
   });
 
   socket.on("player-left-game", (roomId, mode, username, gameEnd) => {
     games[mode][roomId].players[username].active = false;
-    const isEveryOneLeft = checkIfEveryoneLeftGame(games[mode][roomId].players)
-    
+    const isEveryOneLeft = checkIfEveryoneLeftGame(games[mode][roomId].players);
+
     if (!isEveryOneLeft) {
       games[mode][roomId].active = false;
     }
-    
+
     if (!gameEnd) {
       games[mode][roomId].players = updateScoreOnGiveUp(
         games[mode][roomId].players,
@@ -292,7 +367,7 @@ io.on("connection", (socket) => {
         username,
         `${username} left the game. You won!`
       );
-  })
+  });
 
   socket.on("disconnect", () => {
     // console.log(`user ${socket.id} disconnected`);

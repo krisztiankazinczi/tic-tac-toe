@@ -22,5 +22,4 @@ const Error = ({ message, setError }) => {
   )
 }
 
-// export default Error;
 export default withModal(Error);

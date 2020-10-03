@@ -25,6 +25,7 @@ const button = {
 const ConfirmationWithTwoOption = ({ confirmation, setConfirmation, setOpen }) => {
 
   useEffect(() => {
+    console.log(confirmation)
     return () => {
       if (!confirmation.confirm) {
         setConfirmation({...confirmation, state: false, confirm: 'NO'})

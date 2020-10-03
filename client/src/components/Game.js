@@ -7,13 +7,14 @@ import Button from "@material-ui/core/Button";
 
 import Board from "./Game/Board";
 import PlayerName from "./Game/PlayerName";
-import Error from './ModalInfo/Error';
-import Confirmation from './ModalInfo/Confirmation';
-import ConfirmationWithTwoOption from './ModalInfo/ConfirmationWithTwoOption';
+import Error from "./ModalInfo/Error";
+import Confirmation from "./ModalInfo/Confirmation";
+import ConfirmationWithTwoOption from "./ModalInfo/ConfirmationWithTwoOption";
+import NewGameOptions from "./ModalInfo/NewGameOptions";
 
 import socketIOClient from "socket.io-client";
 
-import { convertPlayersObjToArray } from '../utils/helperFunctions';
+import { convertPlayersObjToArray } from "../utils/helperFunctions";
 
 const styles = (theme) => ({
   ...theme.styles,
@@ -65,32 +66,42 @@ const Game = ({ classes }) => {
   const [width, setWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState(null);
-  const [winLength, setWinLength] = useState(0);
   const [playersInfo, setPlayersInfo] = useState(null);
   const [onTurn, setOnTurn] = useState("");
-  const [char, setChar] = useState('');
+  const [char, setChar] = useState("");
   const [gameEnd, setGameEnd] = useState(false);
   const [info, setInfo] = useState("");
   const [exit, setExit] = useState({
     state: false,
     question: "Are you sure you want to leave this page?",
-    confirm: false
+    confirm: false,
   });
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [giveUp, setGiveUp] = useState({
     state: false,
     question: "Are you sure you want to give up this game?",
-    confirm: false
+    confirm: false,
   });
   const [draw, setDraw] = useState({
     state: false,
     question: "Are you sure you want draw match?",
-    confirm: false
+    confirm: false,
   });
   const [drawConfirmation, setDrawConfirmation] = useState({
     state: false,
     question: "",
-    confirm: false
+    confirm: false,
+  });
+  const [newGameOptions, setNewGameOptions] = useState({
+    winLength: 5,
+    boardSize: 10,
+    confirm: false,
+    state: false,
+  });
+  const [newConf, setNewConf] = useState({
+    state: false,
+    question: "",
+    confirm: false,
   });
 
   useEffect(() => {
@@ -107,19 +118,58 @@ const Game = ({ classes }) => {
 
     if (draw.confirm) {
       const socket = socketIOClient(serverUrl);
-      socket.emit("draw-game-offer", roomId, mode, username);
-      setGiveUp({ ...draw, confirm: false });
+      socket.emit("draw-game-offer", roomId, username);
+      setDraw({ ...draw, confirm: false });
     }
 
     if (drawConfirmation.confirm) {
-      console.log(drawConfirmation)
       const socket = socketIOClient(serverUrl);
-      socket.emit("draw-game", roomId, mode, drawConfirmation.confirm, username);
-      setDrawConfirmation({ ...drawConfirmation, confirm: false, question: "" });
+      socket.emit(
+        "draw-game",
+        roomId,
+        mode,
+        drawConfirmation.confirm,
+        username
+      );
+      setDrawConfirmation({
+        ...drawConfirmation,
+        confirm: false,
+        question: "",
+      });
     }
 
+    if (newGameOptions.confirm) {
+      const socket = socketIOClient(serverUrl);
+      socket.emit(
+        "new-game-offer",
+        roomId,
+        username,
+        newGameOptions.winLength,
+        newGameOptions.boardSize
+      );
+      setNewGameOptions({ ...newGameOptions, confirm: false });
+    }
 
-  }, [exit, giveUp, draw, drawConfirmation]);
+    if (newConf.confirm) {
+      console.log(newConf)
+      const socket = socketIOClient(serverUrl);
+      socket.emit(
+        "rematch",
+        roomId,
+        mode,
+        newConf.confirm,
+        username,
+        newGameOptions.winLength,
+        newGameOptions.boardSize
+      );
+      setNewConf({
+        ...newConf,
+        confirm: false,
+        question: "",
+      });
+    }
+
+  }, [exit, giveUp, draw, drawConfirmation, newGameOptions.confirm, newConf.confirm]);
 
   useEffect(() => {
     if (!username) return;
@@ -128,11 +178,14 @@ const Game = ({ classes }) => {
     socket.emit("join-room", roomId, mode, username);
 
     socket.on("get-initial-data", (playerInfo, board, onTurn, winLength) => {
-      setLoading(true)
-      setGameEnd(false)
+      setLoading(true);
+      setGameEnd(false);
       setChar(playerInfo[username].character);
-      setWinLength(winLength);
-      const convertedPlayersInfo = convertPlayersObjToArray(playerInfo, username);
+      setNewGameOptions({ ...newGameOptions, winLength, boardSize: board.length });
+      const convertedPlayersInfo = convertPlayersObjToArray(
+        playerInfo,
+        username
+      );
       setPlayersInfo(convertedPlayersInfo);
       setBoard(board);
       setOnTurn(onTurn);
@@ -142,28 +195,28 @@ const Game = ({ classes }) => {
         if (boardRef.current) {
           setWidth(boardRef.current.offsetWidth);
         }
-      }, 1000)
+      }, 1000);
     });
 
     socket.on("placed-mark", (rowId, colId, char, onTurn) => {
-      const updatedBoard = [...board]
+      const updatedBoard = [...board];
       updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);
-      setOnTurn(onTurn)
-    })
+      setOnTurn(onTurn);
+    });
 
     socket.on("error-to-specific-user", (errorMessage, user) => {
       if (user === username) {
-        setInfo(errorMessage)
+        setInfo(errorMessage);
       }
-    })
+    });
 
     socket.on("victory", (rowId, colId, char, msg, players) => {
-      const updatedBoard = [...board]
+      const updatedBoard = [...board];
       updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);
-      setGameEnd(true)
-      setInfo(msg)
+      setGameEnd(true);
+      setInfo(msg);
       const convertedPlayersInfo = convertPlayersObjToArray(players, username);
       setPlayersInfo(convertedPlayersInfo);
     });
@@ -171,22 +224,49 @@ const Game = ({ classes }) => {
     socket.on("game-ended", (players, message) => {
       const convertedPlayersInfo = convertPlayersObjToArray(players, username);
       setPlayersInfo(convertedPlayersInfo);
-      setGameEnd(true)
-      setInfo(message)
-    })
+      setGameEnd(true);
+      setInfo(message);
+    });
 
     socket.on("opponent-left", (players, user, messageToOther) => {
       const convertedPlayersInfo = convertPlayersObjToArray(players, username);
       setPlayersInfo(convertedPlayersInfo);
-      setGameEnd(true)
-      setInfo(messageToOther)
-      setOpponentLeft(true)
-    })
+      setGameEnd(true);
+      setInfo(messageToOther);
+      setOpponentLeft(true);
+    });
 
     socket.on("draw-confirmation", (message, requestUser) => {
       if (requestUser !== username) {
-        setDrawConfirmation({ ...drawConfirmation, state: true, question: message })
+        setDrawConfirmation({
+          ...drawConfirmation,
+          state: true,
+          question: message,
+        });
       }
+    });
+
+    socket.on(
+      "new-game-confirmation",
+      (message, requestUser, winLength, boardSize) => {
+        if (requestUser !== username) {
+          // this 2 function are not working, but why?????
+          console.log(newConf)
+          setNewConf({
+            ...newConf,
+            state: true,
+            question: message,
+          })
+          setNewGameOptions({ ...newGameOptions, winLength, boardSize });
+          console.log(newConf)
+        }
+      }
+    );
+
+    socket.on("get-rematch-data", (board, winLength, onTurn) => {
+      setBoard(board);
+      setNewGameOptions({ ...newGameOptions, winLength, boardSize: board.length });
+      setOnTurn(onTurn)
     })
 
     if (!board) {
@@ -195,46 +275,44 @@ const Game = ({ classes }) => {
 
     return () => {
       socket.disconnect();
-    } 
-  }, [board, username]);
+    };
+  }, [username]);
   // can I do this without the board in the dependancy array?
 
   const placeMark = (rowId, colId, char) => {
     if (onTurn !== username) {
-      setInfo("It's not your turn, please wait!")
-      return
-    } 
-    if (board[rowId][colId] !== "")  {
-      setInfo("This field is not empty, please select an other one!")
-      return
+      setInfo("It's not your turn, please wait!");
+      return;
+    }
+    if (board[rowId][colId] !== "") {
+      setInfo("This field is not empty, please select an other one!");
+      return;
     }
     if (gameEnd) {
-      setInfo("The game has been finished.")
-      return
-    } 
+      setInfo("The game has been finished.");
+      return;
+    }
 
     const socket = socketIOClient(serverUrl);
     socket.emit("place-mark", roomId, mode, username, rowId, colId, char);
   };
 
   const newGame = () => {
-    // on dialog we the new game options can be selected
-    const socket = socketIOClient(serverUrl);
-    socket.emit("rematch", roomId, mode);
-  }
+    setNewGameOptions({ ...newGameOptions, state: true });
+  };
 
   const leaveGame = () => {
-    setExit({question: exit.question, state: true, confirm: false});
+    setExit({ question: exit.question, state: true, confirm: false });
     // event trigger happens in a useEffect, when the player confirmed the leave
-  }
+  };
 
   const drawGame = () => {
     setDraw({ ...draw, state: true });
-  }
+  };
 
   const givingUp = () => {
-    setGiveUp({ ...giveUp, state: true })
-  }
+    setGiveUp({ ...giveUp, state: true });
+  };
 
   const containerWidth = {
     width: `${width}px`,
@@ -249,39 +327,52 @@ const Game = ({ classes }) => {
   }
 
   if (exit.state) {
-    return (
-      <Confirmation confirmation={exit} setConfirmation={setExit} />
-    )
+    return <Confirmation confirmation={exit} setConfirmation={setExit} />;
   }
 
   if (giveUp.state) {
-    return (
-      <Confirmation confirmation={giveUp} setConfirmation={setGiveUp} />
-    )
+    return <Confirmation confirmation={giveUp} setConfirmation={setGiveUp} />;
   }
 
   if (draw.state) {
-    return (
-      <Confirmation confirmation={draw} setConfirmation={setDraw} />
-    )
+    return <Confirmation confirmation={draw} setConfirmation={setDraw} />;
   }
 
   if (drawConfirmation.state === true) {
     return (
-      <ConfirmationWithTwoOption  confirmation={drawConfirmation} setConfirmation={setDrawConfirmation} />
-    )
+      <ConfirmationWithTwoOption
+        confirmation={drawConfirmation}
+        setConfirmation={setDrawConfirmation}
+      />
+    );
+  }
+
+  if (newGameOptions.state === true) {
+    return (
+      <NewGameOptions
+        newGameOptions={newGameOptions}
+        setNewGameOptions={setNewGameOptions}
+      />
+    );
+  }
+
+  if (newConf.state === true) {
+    return (
+      <ConfirmationWithTwoOption
+        confirmation={newConf}
+        setConfirmation={setNewConf}
+      />
+    );
   }
 
   if (exit.confirm) {
-    return (
-      <Redirect to="/" />
-    )
+    return <Redirect to="/" />;
   }
 
   if (info) {
     return (
       <Error message={info} setError={setInfo} buttonNeeded timeLimit={2} />
-    )
+    );
   }
 
   return (
@@ -290,33 +381,57 @@ const Game = ({ classes }) => {
         <div className={classes.buttons} style={containerWidth}>
           {!gameEnd ? (
             <div className={classes.buttons} style={containerWidth}>
-              <Button onClick={() => givingUp()} style={fontSize} variant="outlined" color="primary">
+              <Button
+                onClick={() => givingUp()}
+                style={fontSize}
+                variant="outlined"
+                color="primary"
+              >
                 Give up
               </Button>
-              <Button onClick={() => drawGame()} style={fontSize} variant="outlined" color="primary">
+              <Button
+                onClick={() => drawGame()}
+                style={fontSize}
+                variant="outlined"
+                color="primary"
+              >
                 Draw?
               </Button>
-              <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
+              <Button
+                onClick={() => leaveGame()}
+                style={fontSize}
+                variant="outlined"
+                color="primary"
+              >
                 Leave Game
               </Button>
             </div>
           ) : (
             <div className={classes.buttons} style={containerWidth}>
               {!opponentLeft && (
-                <Button onClick={() => newGame()} style={fontSize} variant="outlined" color="primary">
+                <Button
+                  onClick={() => newGame()}
+                  style={fontSize}
+                  variant="outlined"
+                  color="primary"
+                >
                   Rematch
                 </Button>
               )}
-              <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
+              <Button
+                onClick={() => leaveGame()}
+                style={fontSize}
+                variant="outlined"
+                color="primary"
+              >
                 Leave Game
               </Button>
             </div>
           )}
-          
         </div>
         <Board width={width} board={board} placeMark={placeMark} char={char} />
         <div className={classes.playerInfo} style={containerWidth}>
-          {playersInfo.map( (player, id) => (
+          {playersInfo.map((player, id) => (
             <PlayerName
               key={id}
               fontSize={width * FONT_SIZE_CORRECTION}
