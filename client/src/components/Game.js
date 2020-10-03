@@ -75,7 +75,14 @@ const Game = ({ classes }) => {
     question: "Are you sure you want to leave this page?",
     confirm: false
   });
+  const [opponentLeft, setOpponentLeft] = useState(false)
 
+  useEffect(() => {
+    if (exit.confirm) {
+      const socket = socketIOClient(serverUrl);
+      socket.emit("player-left-game", roomId, mode, username, gameEnd);
+    }
+  }, [exit]);
 
   useEffect(() => {
     if (!username) return;
@@ -130,11 +137,21 @@ const Game = ({ classes }) => {
       setGameEnd(true)
     })
 
+    socket.on("opponent-left", (players, user, messageToOther) => {
+      const convertedPlayersInfo = convertPlayersObjToArray(players, username);
+      setPlayersInfo(convertedPlayersInfo);
+      setGameEnd(true)
+      setInfo(messageToOther)
+      setOpponentLeft(true)
+    })
+
     if (!board) {
       socket.emit("get-game-data", roomId, mode, username);
     }
 
-    return () => socket.disconnect();
+    return () => {
+      socket.disconnect();
+    } 
   }, [board, username]);
   // can I do this without the board in the dependancy array?
 
@@ -147,7 +164,10 @@ const Game = ({ classes }) => {
       setInfo("This field is not empty, please select an other one!")
       return
     }
-    if (gameEnd) return;
+    if (gameEnd) {
+      setInfo("The game has been finished.")
+      return
+    } 
 
     const socket = socketIOClient(serverUrl);
     socket.emit("place-mark", roomId, mode, username, rowId, colId, char);
@@ -160,11 +180,8 @@ const Game = ({ classes }) => {
   }
 
   const leaveGame = () => {
-    setExit({question: exit.question, state: true, confirm: false})
-    console.log(exit)
-    // dialog to confirm the exit
-    // Redirect to "/"
-    // stop the game on opponent -> show in dialog and suggest exit
+    setExit({question: exit.question, state: true, confirm: false});
+    // event trigger happens in a useEffect, when the player confirmed the leave
   }
 
   const draw = () => {
@@ -191,7 +208,6 @@ const Game = ({ classes }) => {
   }
 
   if (exit.state) {
-    console.log('bejut ide?')
     return (
       <Confirmation question={exit.question} confirmation={exit} setConfirmation={setExit} />
     )
@@ -227,9 +243,11 @@ const Game = ({ classes }) => {
             </div>
           ) : (
             <div className={classes.buttons} style={containerWidth}>
-              <Button onClick={() => newGame()} style={fontSize} variant="outlined" color="primary">
-                Rematch
-              </Button>
+              {!opponentLeft && (
+                <Button onClick={() => newGame()} style={fontSize} variant="outlined" color="primary">
+                  Rematch
+                </Button>
+              )}
               <Button onClick={() => leaveGame()} style={fontSize} variant="outlined" color="primary">
                 Leave Game
               </Button>

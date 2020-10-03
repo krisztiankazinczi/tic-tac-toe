@@ -14,9 +14,15 @@ const {
   checkVictoryLength5,
   checkVictoryLength4,
   checkVictoryLength3,
+  checkDraw
 } = require("./utils/victoryChecks");
 
-const { updateScoreOnGiveUp, updateScoreOnVictory } = require("./utils/gamePropertyUpdates");
+const { 
+  updateScoreOnGiveUp,
+  updateScoreOnVictory, 
+  updateScoreOnDraw,
+  checkIfEveryoneLeftGame
+} = require("./utils/gamePropertyUpdates");
 
 const app = express();
 
@@ -63,9 +69,11 @@ app.post("/roomId", (req, res) => {
       character: myChar,
       ready: false,
       score: 0,
+      active: true
     },
   };
   games[mode][roomId].onTurn = username;
+  games[mode][roomId].active = true;
 
   const generatedBoard = Array(boardSize)
     .fill()
@@ -129,6 +137,7 @@ io.on("connection", (socket) => {
         character: myChar,
         ready: false,
         score: 0,
+        active: true
       };
     }
 
@@ -195,18 +204,26 @@ io.on("connection", (socket) => {
       io.sockets.in(roomId).emit("victory", rowId, colId, char, `${username} has won the game. Congrats!`, games[mode][roomId].players);
       return;
     }
+    
+    const emptyFieldsLeft = checkDraw(games[mode][roomId].board);
+    if (!emptyFieldsLeft) {
+      games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
+      io.sockets.in(roomId).emit("victory", rowId, colId, char, "The game has been draw.", games[mode][roomId].players);
+      return;
+    }
 
     games[mode][roomId].onTurn = changeOnTurn(
       games[mode][roomId].onTurn,
       games[mode][roomId].players
-    );
-    io.sockets
+      );
+      io.sockets
       .in(roomId)
       .emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn);
+
   });
 
   socket.on("draw-game", (roomId, mode) => {
-    games[mode][roomId].players["Tie"].score += 1;
+    games[mode][roomId].players = updateScoreOnDraw(games[mode][roomId].players)
     io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players);
   });
 
@@ -235,6 +252,30 @@ io.on("connection", (socket) => {
         games[mode][roomId].winLength,
       );
   });
+
+  socket.on("player-left-game", (roomId, mode, username, gameEnd) => {
+    games[mode][roomId].players[username].active = false;
+    const isEveryOneLeft = checkIfEveryoneLeftGame(games[mode][roomId].players)
+    
+    if (!isEveryOneLeft) {
+      games[mode][roomId].active = false;
+    }
+    
+    if (!gameEnd) {
+      games[mode][roomId].players = updateScoreOnGiveUp(
+        games[mode][roomId].players,
+        username
+      );
+    }
+    io.sockets
+      .in(roomId)
+      .emit(
+        "opponent-left",
+        games[mode][roomId].players,
+        username,
+        `${username} left the game. You won!`
+      );
+  })
 
   socket.on("disconnect", () => {
     // console.log(`user ${socket.id} disconnected`);

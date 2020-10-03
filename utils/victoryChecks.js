@@ -151,8 +151,21 @@ const checkVictoryLength3 = (board, char) => {
 
 };
 
+const checkDraw = (board) => {
+  let emptyFieldsLeft = false;
+  for (let i = 0; i < board.length; i++) {
+    for (let j = 0; j < board[i].length; j++) {
+      if (board[i][j] === "") {
+        emptyFieldsLeft = true;
+      }
+    }
+  }
+  return emptyFieldsLeft;
+}
+
 module.exports = {
   checkVictoryLength5,
   checkVictoryLength4,
-  checkVictoryLength3
+  checkVictoryLength3,
+  checkDraw
 }
