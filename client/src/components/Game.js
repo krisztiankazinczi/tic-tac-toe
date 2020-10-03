@@ -75,14 +75,25 @@ const Game = ({ classes }) => {
     question: "Are you sure you want to leave this page?",
     confirm: false
   });
-  const [opponentLeft, setOpponentLeft] = useState(false)
+  const [opponentLeft, setOpponentLeft] = useState(false);
+  const [giveUp, setGiveUp] = useState({
+    state: false,
+    question: "Are you sure you want to give up this game?",
+    confirm: false
+  });
 
   useEffect(() => {
     if (exit.confirm) {
       const socket = socketIOClient(serverUrl);
       socket.emit("player-left-game", roomId, mode, username, gameEnd);
     }
-  }, [exit]);
+
+    if (giveUp.confirm) {
+      const socket = socketIOClient(serverUrl);
+      socket.emit("give-up-game", roomId, mode, username);
+      setGiveUp({ ...giveUp, confirm: false });
+    }
+  }, [exit, giveUp]);
 
   useEffect(() => {
     if (!username) return;
@@ -131,10 +142,11 @@ const Game = ({ classes }) => {
       setPlayersInfo(convertedPlayersInfo);
     });
 
-    socket.on("game-ended", (players) => {
+    socket.on("game-ended", (players, message) => {
       const convertedPlayersInfo = convertPlayersObjToArray(players, username);
       setPlayersInfo(convertedPlayersInfo);
       setGameEnd(true)
+      setInfo(message)
     })
 
     socket.on("opponent-left", (players, user, messageToOther) => {
@@ -189,10 +201,11 @@ const Game = ({ classes }) => {
     socket.emit("draw-game", roomId, mode);
   }
 
-  const giveUp = () => {
+  const givingUp = () => {
+    setGiveUp({ ...giveUp, state: true })
     // dialog to confirm
-    const socket = socketIOClient(serverUrl);
-    socket.emit("give-up-game", roomId, mode, username);
+    // const socket = socketIOClient(serverUrl);
+    // socket.emit("give-up-game", roomId, mode, username);
   }
 
   const containerWidth = {
@@ -210,6 +223,12 @@ const Game = ({ classes }) => {
   if (exit.state) {
     return (
       <Confirmation question={exit.question} confirmation={exit} setConfirmation={setExit} />
+    )
+  }
+
+  if (giveUp.state) {
+    return (
+      <Confirmation question={giveUp.question} confirmation={giveUp} setConfirmation={setGiveUp} />
     )
   }
 
@@ -231,7 +250,7 @@ const Game = ({ classes }) => {
         <div className={classes.buttons} style={containerWidth}>
           {!gameEnd ? (
             <div className={classes.buttons} style={containerWidth}>
-              <Button onClick={() => giveUp()} style={fontSize} variant="outlined" color="primary">
+              <Button onClick={() => givingUp()} style={fontSize} variant="outlined" color="primary">
                 Give up
               </Button>
               <Button onClick={() => draw()} style={fontSize} variant="outlined" color="primary">

@@ -232,7 +232,7 @@ io.on("connection", (socket) => {
       games[mode][roomId].players,
       username
     );
-    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players);
+    io.sockets.in(roomId).emit("game-ended", games[mode][roomId].players, `${username} has given up the game.`);
   });
 
   socket.on("rematch", (roomId, mode) => {
