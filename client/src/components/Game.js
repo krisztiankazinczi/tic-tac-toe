@@ -25,7 +25,7 @@ const styles = (theme) => ({
     flexDirection: "column",
     minHeight: "100vh",
     height: "100%",
-    // width: "50%",
+    width: "50%",
     alignItems: "center",
     backgroundColor: theme.styles.colors.mainBackgroundColor,
   },
@@ -50,17 +50,9 @@ const styles = (theme) => ({
     width: "100%",
     backgroundColor: theme.styles.colors.mainBackgroundColor,
   },
-  fullWidth: {
-    width: '100%'
-  },
-  halfWidth: {
-    width: '50%'
-  }
 });
 
 const FONT_SIZE_CORRECTION = 0.025;
-const SCREEN_CORRECTION_TABLET = 1.5 // for smaller screens everything will be wilder than 50%
-const SCREEN_CORRECTION_PHONE = 2 // for smaller screens everything will be wilder than 50%
 
 const serverUrl =
   process.env.REACT_APP_DEVELOPMENT_MODE === "true"
@@ -207,6 +199,8 @@ const Game = ({ classes }) => {
     });
 
     socket.on("placed-mark", (rowId, colId, char, onTurn) => {
+      console.log(board);
+      console.log(rowId, colId, char, onTurn)
       const updatedBoard = [...board];
       updatedBoard[rowId][colId] = char;
       setBoard(updatedBoard);
@@ -284,7 +278,7 @@ const Game = ({ classes }) => {
     return () => {
       socket.disconnect();
     };
-  }, [username]);
+  }, [board, username]);
   // can I do this without the board in the dependancy array?
 
   const placeMark = (rowId, colId, char) => {
@@ -323,11 +317,11 @@ const Game = ({ classes }) => {
   };
 
   const containerWidth = {
-    width: width > 600 ? `${width}px` : width > 400 ? `${width * SCREEN_CORRECTION_TABLET}px` : `${width * SCREEN_CORRECTION_PHONE}px`,
+    width: `${width}px`,
   };
 
   const fontSize = {
-    fontSize: width > 600 ? `${width * FONT_SIZE_CORRECTION}px` : width > 400 ? `${width * SCREEN_CORRECTION_TABLET * FONT_SIZE_CORRECTION}px` : `${width * SCREEN_CORRECTION_PHONE * FONT_SIZE_CORRECTION}px`,
+    fontSize: `${width * FONT_SIZE_CORRECTION}px`,
   };
 
   if (loading) {
@@ -385,7 +379,7 @@ const Game = ({ classes }) => {
 
   return (
     <div className={classes.container}>
-      <div ref={boardRef} className={ width > 600 ? clsx(classes.centerToMiddle, classes.fullWidth) : clsx(classes.centerToMiddle, classes.halfWidth)}>
+      <div ref={boardRef} className={classes.centerToMiddle}>
         <div className={classes.buttons} style={containerWidth}>
           {!gameEnd ? (
             <div className={classes.buttons} style={containerWidth}>
@@ -437,12 +431,12 @@ const Game = ({ classes }) => {
             </div>
           )}
         </div>
-        <Board width={width > 600 ? width : width > 400 ? width * SCREEN_CORRECTION_TABLET : width * SCREEN_CORRECTION_PHONE} board={board} placeMark={placeMark} char={char} />
+        <Board width={width} board={board} placeMark={placeMark} char={char} />
         <div className={classes.playerInfo} style={containerWidth}>
           {playersInfo.map((player, id) => (
             <PlayerName
               key={id}
-              fontSize={width > 600 ? width * FONT_SIZE_CORRECTION : width > 400 ? width * SCREEN_CORRECTION_TABLET * FONT_SIZE_CORRECTION : width * SCREEN_CORRECTION_PHONE * FONT_SIZE_CORRECTION}
+              fontSize={width * FONT_SIZE_CORRECTION}
               char={player[Object.keys(player)[0]].character}
               username={Object.keys(player)[0]}
               score={player[Object.keys(player)[0]].score}
