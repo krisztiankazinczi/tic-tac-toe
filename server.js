@@ -23,6 +23,7 @@ const {
   updateScoreOnDraw,
   checkIfEveryoneLeftGame,
   getOpponentName,
+  isCharacterUsed
 } = require("./utils/gamePropertyUpdates");
 
 const app = express();
@@ -76,6 +77,7 @@ app.post("/roomId", (req, res) => {
   games[mode][roomId].onTurn = username;
   games[mode][roomId].active = true;
   games[mode][roomId].isFull = false;
+  games[mode][roomId].createdAt = Date.now();
 
   const generatedBoard = Array(boardSize)
     .fill()
@@ -87,17 +89,21 @@ app.post("/roomId", (req, res) => {
 });
 
 app.get('/availableRooms', (req, res) => {
+  const actualTimeStamp = Date.now();
   const roomsInfo = [];
   Object.entries(games.random).forEach(([roomId, gameInfo]) => {
     if (!gameInfo.isFull) {
-      const roomInfo = {
-        roomId,
-        boardSize: gameInfo.boardSize,
-        winLength: gameInfo.winLength,
+      // this is needed because I can not delete games if user just close the browser. If I will solve that, I wont need this if statement and createdAt value
+      if ((actualTimeStamp - gameInfo.createdAt) / 1000 < 60) {
+        const roomInfo = {
+          roomId,
+          boardSize: gameInfo.boardSize,
+          winLength: gameInfo.winLength,
+        }
+        const player = Object.keys(gameInfo.players)[0]
+        roomInfo.opponent = player
+        roomsInfo.push(roomInfo);
       }
-      const player = Object.keys(gameInfo.players)[0]
-      roomInfo.opponent = player
-      roomsInfo.push(roomInfo);
     }
   })
 
@@ -112,10 +118,17 @@ let games = {
 io.on("connection", (socket) => {
 
   socket.on("join-room", (roomId, mode, username) => {
+
     if (mode !== "random") {
       if (mode !== "friend") {
-        return; // custom error event + error message
+        socket.emit("joining-errors", "The selected Game Mode is not supported. Please select an existing mode"); 
+        return;
       }
+    }
+
+    if (!games[mode][roomId]) {
+      socket.emit("joining-errors", "This room is not existing. Please create one if you want to play."); 
+      return;
     }
 
     if (games[mode][roomId].isFull && !games[mode][roomId].players[username]) {
@@ -150,6 +163,23 @@ io.on("connection", (socket) => {
 
     }
   });
+
+  socket.on("delete-room", (roomId, mode, username) => {
+    if (games[mode][roomId].players[username]) {
+      delete games[mode][roomId]
+      console.log(games[mode])
+    }
+  })
+
+  socket.on("change-character", (roomId, mode, username, character) => {
+    const characterUsed = isCharacterUsed(games[mode][roomId].players, character);
+    console.log(characterUsed)
+    if (characterUsed) {
+      io.sockets.in(roomId).emit("char-used", `Unfortunately your opponent selected this character (${character}). Please select an other one!`, username)
+      return;
+    }
+    games[mode][roomId].players[username].character = character;
+  })
 
   socket.on("ready", (roomId, mode, username) => {
     // validation
@@ -321,6 +351,12 @@ io.on("connection", (socket) => {
 
       games[mode][roomId].board = generatedBoard;
       games[mode][roomId].winLength = winLength;
+      games[mode][roomId].winCheck =
+        parseInt(winLength) === 5
+          ? checkVictoryLength5
+          : parseInt(winLength) === 4
+          ? checkVictoryLength4
+          : checkVictoryLength3;
       
       io.sockets
         .in(roomId)
@@ -348,8 +384,10 @@ io.on("connection", (socket) => {
     games[mode][roomId].players[username].active = false;
     const isEveryOneLeft = checkIfEveryoneLeftGame(games[mode][roomId].players);
 
-    if (!isEveryOneLeft) {
+    if (isEveryOneLeft) {
       games[mode][roomId].active = false;
+      delete games[mode][roomId];
+      return;
     }
 
     if (!gameEnd) {

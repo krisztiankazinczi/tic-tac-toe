@@ -43,10 +43,21 @@ const getOpponentName = (players, username) => {
   return opponentName;
 }
 
+const isCharacterUsed = (players, character) => {
+  let characterUsed = false;
+  Object.values(players). forEach(player => {
+    if (player.character && player.character === character) {
+      characterUsed = true
+    }
+  });
+  return characterUsed
+}
+
 module.exports = {
   updateScoreOnGiveUp,
   updateScoreOnVictory,
   updateScoreOnDraw,
   checkIfEveryoneLeftGame,
-  getOpponentName
+  getOpponentName,
+  isCharacterUsed
 };
