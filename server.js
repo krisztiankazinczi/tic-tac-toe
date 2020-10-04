@@ -75,6 +75,7 @@ app.post("/roomId", (req, res) => {
   };
   games[mode][roomId].onTurn = username;
   games[mode][roomId].active = true;
+  games[mode][roomId].isFull = false;
 
   const generatedBoard = Array(boardSize)
     .fill()
@@ -88,14 +89,16 @@ app.post("/roomId", (req, res) => {
 app.get('/availableRooms', (req, res) => {
   const roomsInfo = [];
   Object.entries(games.random).forEach(([roomId, gameInfo]) => {
-    const roomInfo = {
-      roomId,
-      boardSize: gameInfo.boardSize,
-      winLength: gameInfo.winLength,
+    if (!gameInfo.isFull) {
+      const roomInfo = {
+        roomId,
+        boardSize: gameInfo.boardSize,
+        winLength: gameInfo.winLength,
+      }
+      const player = Object.keys(gameInfo.players)[0]
+      roomInfo.opponent = player
+      roomsInfo.push(roomInfo);
     }
-    const player = Object.keys(gameInfo.players)[0]
-    roomInfo.opponent = player
-    roomsInfo.push(roomInfo);
   })
 
   res.status(200).json(roomsInfo);
@@ -115,36 +118,36 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (
-      games[mode][roomId].players &&
-      Object.keys(games[mode][roomId].players).length === 2
-    ) {
+    if (games[mode][roomId].isFull && !games[mode][roomId].players[username]) {
       socket.emit("room-is-full"); // custom error event + error message
       return;
-    }
-    socket.join(roomId);
+    } else {
+      socket.join(roomId);
+  
+      if (!games[mode][roomId].players[username]) {
+        let myChar;
+        Object.entries(games[mode][roomId].players).forEach(
+          ([username, values]) => {
+            myChar = values.character === "X" ? "O" : "X";
+          }
+        );
+        games[mode][roomId].players[username] = {
+          character: myChar,
+          ready: false,
+          score: 0,
+          active: true,
+        };
+      }
+  
+      io.sockets.in(roomId).emit("user-connected", games[mode][roomId].players);
+  
+      if (Object.keys(games[mode][roomId].players).length === 2) {
+        games[mode][roomId].isFull = true;
+        games[mode][roomId].players.Tie = {
+          score: 0,
+        };
+      }
 
-    if (!games[mode][roomId].players[username]) {
-      let myChar;
-      Object.entries(games[mode][roomId].players).forEach(
-        ([username, values]) => {
-          myChar = values.character === "X" ? "O" : "X";
-        }
-      );
-      games[mode][roomId].players[username] = {
-        character: myChar,
-        ready: false,
-        score: 0,
-        active: true,
-      };
-    }
-
-    io.sockets.in(roomId).emit("user-connected", games[mode][roomId].players);
-
-    if (Object.keys(games[mode][roomId].players).length === 2) {
-      games[mode][roomId].players.Tie = {
-        score: 0,
-      };
     }
   });
 
