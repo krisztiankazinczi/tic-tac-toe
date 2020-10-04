@@ -119,7 +119,7 @@ io.on("connection", (socket) => {
     }
 
     if (games[mode][roomId].isFull && !games[mode][roomId].players[username]) {
-      socket.emit("room-is-full"); // custom error event + error message
+      socket.emit("joining-errors", "The room is full, select an other room."); 
       return;
     } else {
       socket.join(roomId);

@@ -12,6 +12,8 @@ import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
+import Error from './ModalInfo/Error';
+
 import socketIOClient from 'socket.io-client';
 
 const serverUrl = process.env.REACT_APP_DEVELOPMENT_MODE === 'true'
@@ -58,6 +60,8 @@ const WaitingRoom = ({ classes }) => {
   const [meReady, setMeReady] = useState(false);
   const [otherPlayerReady, setOtherPlayerReady] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [joinError, setJoinError] = useState(false);
+  const [error, setError] = useState("");
   // const {isConnected, everyoneConnected, loadingData, joinRoom} = useSocket();
 
 
@@ -87,9 +91,12 @@ const WaitingRoom = ({ classes }) => {
       })
     })
 
-    socket.on("room-is-full", (roomId) => {
+    socket.on("joining-errors", (message) => {
       // dialog will pop up and then a click 'OK' will Link to "/"
-      console.log('room is full')
+      setError(message)
+      setTimeout(() => {
+        setJoinError(true)
+      }, 2000)
     })
 
     return () => socket.disconnect();
@@ -101,6 +108,10 @@ const WaitingRoom = ({ classes }) => {
     console.log(roomId, mode, username)
     socket.emit("ready", roomId, mode, username)
   }
+  const copyURL = () => {
+    copy(window.location.href);
+    setCopySuccess(true);
+  };
 
   if (mode !== 'random') {
     if (mode !== 'friend') {
@@ -108,17 +119,18 @@ const WaitingRoom = ({ classes }) => {
     }
   }
 
-  // if (!isConnected) {
-  //   return <div>Loading</div>
-  // }
-
-  const copyURL = () => {
-    copy(window.location.href);
-    setCopySuccess(true);
-  };
+  if (joinError) {
+    return <Redirect to="/selectGameMode" />;
+  }
 
   if (meReady && otherPlayerReady) {
     return <Redirect to={`/game/${mode}/${roomId}`} />;
+  }
+
+  if (error) {
+    return (
+      <Error message={error} setError={setError} buttonNeeded timeLimit={2} />
+    );
   }
 
   if ( mode === "random") {
