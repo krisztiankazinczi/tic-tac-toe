@@ -314,7 +314,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("rematch", (roomId, mode, acceptance, username, winLength, boardSize) => {
-    console.log(username, acceptance)
     if (acceptance === "YES") {
       const generatedBoard = Array(boardSize)
         .fill()
@@ -359,13 +358,16 @@ io.on("connection", (socket) => {
         username
       );
     }
+
+    const message = !gameEnd ? `${username} left the game. You won!` : `${username} left the game.`
+
     io.sockets
       .in(roomId)
       .emit(
         "opponent-left",
         games[mode][roomId].players,
         username,
-        `${username} left the game. You won!`
+        message
       );
   });
 

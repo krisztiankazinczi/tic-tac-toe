@@ -27,13 +27,14 @@ const styles = (theme) => ({
       color: theme.styles.colors.orangeColor,
     },
   },
-  secondaryTextColor: {
-    color: theme.styles.colors.orangeColor,
+  interactiveTextColor: {
+    color: theme.palette.primary.main,
     marginTop: "20px",
   },
   button: {
-    ...theme.styles.button,
+    fontSize: '25px',
     marginTop: "20px",
+    textTransform: 'none'
   },
   center: {
     display: "flex",
@@ -128,7 +129,7 @@ const WaitingRoom = ({ classes }) => {
         </Typography>
         {!playerJoined ? (
           <div>
-            <Typography className={classes.secondaryTextColor} variant="h5">
+            <Typography className={classes.interactiveTextColor} variant="h5">
               Please wait until a player join...
             </Typography>
             <LinearProgress
@@ -140,7 +141,7 @@ const WaitingRoom = ({ classes }) => {
           <div>
             {meReady && !otherPlayerReady ? (
               <div>
-                <Typography className={classes.secondaryTextColor} variant="h5">
+                <Typography className={classes.interactiveTextColor} variant="h5">
                   Waiting for the other player to be ready...
                 </Typography>
                 <LinearProgress
@@ -150,12 +151,13 @@ const WaitingRoom = ({ classes }) => {
               </div>
             ) : (
               <div className={classes.center}>
-                <Typography className={classes.secondaryTextColor} variant="h5">
+                <Typography className={classes.interactiveTextColor} variant="h5">
                   Your opponent joined!
                 </Typography>
                 <Button
-                  size="large"
+                  size="medium"
                   variant="outlined"
+                  color="primary"
                   className={classes.button}
                   onClick={setStatusToReady}
                 >
@@ -178,45 +180,41 @@ const WaitingRoom = ({ classes }) => {
         {!playerJoined ? (
           <div>
             <div className={classes.center}>
-              <Typography variant="h5" className={classes.textColor}>
-                {" "}
-                Send this link to invite your friend:{" "}
-                <span>{window.location.href}</span>
-              </Typography>
               <div className={classes.copyInfo}>
                 <Button
                   variant="outlined"
+                  color="primary"
                   className={classes.button}
                   onClick={copyURL}
                 >
-                  Copy Link
+                  Send this link to someone
                 </Button>
                 {copySuccess && (
                   <Typography
                     variant="h5"
-                    className={classes.secondaryTextColor}
+                    className={classes.interactiveTextColor}
                     style={{ marginLeft: "30px" }}
                   >
                     URL Copied
                   </Typography>
                 )}
               </div>
-            </div>
-            <div>
               <Typography className={classes.textColor} variant="h5">
                 Waiting for your friends to join...
               </Typography>
               <LinearProgress
-                style={{ marginTop: "20px", height: "20px", width: "50%" }}
+                style={{ marginTop: "20px", height: "20px", width: '100%'}}
                 color="primary"
               />
+            </div>
+            <div>
             </div>
           </div>
         ) : (
           <div>
             {meReady && !otherPlayerReady ? (
               <div>
-                <Typography className={classes.secondaryTextColor} variant="h5">
+                <Typography className={classes.interactiveTextColor} variant="h5">
                   Waiting for the other player to be ready...
                 </Typography>
                 <LinearProgress
@@ -226,12 +224,13 @@ const WaitingRoom = ({ classes }) => {
               </div>
             ) : (
               <div className={classes.center}>
-                <Typography className={classes.secondaryTextColor} variant="h5">
+                <Typography className={classes.interactiveTextColor} variant="h5">
                   Your opponent joined!
                 </Typography>
                 <Button
-                  size="large"
+                  size="medium"
                   variant="outlined"
+                  color="primary"
                   className={classes.button}
                   onClick={setStatusToReady}
                 >

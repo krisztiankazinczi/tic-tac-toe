@@ -23,7 +23,7 @@ const theme = {
       secondaryBackgroundColor: "#30445C",
       secondaryBackgroundColorHovered: "#3c5573",
       mainTextColor: "#9BA8B5",
-      orangeColor: "#ff5733",
+      orangeColor: "#4dd0e1",
     },
     button: {
       backgroundColor: "#30445C",
@@ -45,6 +45,9 @@ const theme = {
       justifyContent: "center",
       backgroundColor: mainBackgroundColor,
     },
+    halfWidth: {
+      width: '50%'  
+    }
   },
 };
 

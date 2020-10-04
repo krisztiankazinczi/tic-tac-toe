@@ -49,6 +49,7 @@ const GameMode = ({ classes }) => {
     confirm: false,
     state: false,
   });
+  const [loadingData, setLoadingData] = useState(false)
 
   useEffect(() => {
     if (newGameOptions.confirm) {
@@ -59,6 +60,7 @@ const GameMode = ({ classes }) => {
         newGameOptions.character &&
         username
       ) {
+        setLoadingData(true);
         const data = {
           mode,
           boardSize: newGameOptions.boardSize,
@@ -74,7 +76,10 @@ const GameMode = ({ classes }) => {
           body: JSON.stringify(data),
         })
           .then((res) => res.json())
-          .then((id) => setRoomId(id));
+          .then((id) => {
+            setRoomId(id);
+            setLoadingData(false);
+          });
       }
     }
   }, [newGameOptions.confirm]);
@@ -88,8 +93,6 @@ const GameMode = ({ classes }) => {
   }
 
   const selectGameMode = (event) => {
-    //get RoomId from server
-
     // on MaterialUI elements I had to use event.currentTarget.value to get the value of the field
     if (
       event.currentTarget.value === "random" ||
@@ -111,6 +114,14 @@ const GameMode = ({ classes }) => {
         setNewGameOptions={setNewGameOptions}
       />
     );
+  }
+
+  if (loadingData) {
+    return (
+      <div className={classes.centerToMiddle}>
+        <Spinner />
+      </div>
+    )
   }
 
   if (!mode) {

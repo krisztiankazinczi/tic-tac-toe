@@ -6,36 +6,41 @@ import DialogActions from "@material-ui/core/DialogActions";
 
 const dialogStyle = {
   // backgroundColor: "transparent",
-  backgroundColor: '#2F4459',
-}
+  backgroundColor: "#2F4459",
+};
 
 const dialogActionsStyle = {
   display: "flex",
-    flexDirection: "column",
-    backgroundColor: "#3c5573",
-    color: "#9BA8B5",
-    overflow: "hidden",
-}
+  flexDirection: "column",
+  backgroundColor: "#3c5573",
+  color: "#9BA8B5",
+  overflow: "hidden",
+};
 
 const centerStyle = {
   width: "70%",
-  marginLeft: "auto",
-  marginRight: "auto",
   marginTop: "20px",
-  textTransform: 'none'
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+};
+
+const buttonStyle = {
+  textTransform: "none",
+  fontSize: "20px",
 }
 
-const withModal = (Info) => props => {
+const withModal = (Info) => (props) => {
   const [open, setOpen] = useState(true);
-  const { buttonNeeded, timeLimit } = props
+  const { buttonNeeded, timeLimit } = props;
 
   useEffect(() => {
     if (timeLimit) {
       setTimeout(() => {
-        setOpen(false)
-      }, (timeLimit * 1000))
+        setOpen(false);
+      }, timeLimit * 1000);
     }
-  }, [])
+  }, []);
 
   return (
     <Dialog
@@ -48,9 +53,16 @@ const withModal = (Info) => props => {
       <DialogActions style={dialogActionsStyle}>
         <Info style={centerStyle} setOpen={setOpen} {...props} />
         {buttonNeeded && (
-          <Button onClick={() => setOpen(false)} style={centerStyle} color="secondary">
-            Understand
-          </Button>
+          <div style={centerStyle}>
+            <Button
+              onClick={() => setOpen(false)}
+              color="primary"
+              style={buttonStyle}
+              variant="outlined"
+            >
+              Understand
+            </Button>
+          </div>
         )}
       </DialogActions>
     </Dialog>

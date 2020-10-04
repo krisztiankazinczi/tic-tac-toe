@@ -19,7 +19,7 @@ const buttonContainer = {
 
 const button = {
   textTransform: 'none',
-  fontSize: '25px'
+  fontSize: '20px'
 }
 
 const Confirmation = ({ confirmation, setConfirmation, setOpen }) => {
@@ -49,6 +49,7 @@ const Confirmation = ({ confirmation, setConfirmation, setOpen }) => {
           onClick={cancel}
           style={button}
           color="secondary"
+          variant="outlined"
         >
           Cancel
         </Button>
@@ -56,6 +57,7 @@ const Confirmation = ({ confirmation, setConfirmation, setOpen }) => {
           onClick={accept}
           style={button}
           color="primary"
+          variant="outlined"
         >
           OK
         </Button>
