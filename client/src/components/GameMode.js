@@ -22,6 +22,13 @@ const styles = (theme) => ({
     marginTop: "30px",
     textTransform: "none",
   },
+  backButton: {
+    textTransform: "none",
+    width: '10%',
+    marginLeft: 'auto',
+    marginTop: '10px',
+    marginRight: '20px'
+  },
   options: {
     display: "flex",
     width: "50%",
@@ -37,9 +44,16 @@ const styles = (theme) => ({
     width: "50%",
   },
   backgroundColor: {
-    backgroundColor: theme.styles.colors.mainBackgroundColor
-  }
+    backgroundColor: theme.styles.colors.mainBackgroundColor,
+    display: 'flex',
+    flexDirection: 'column',
+  },
 });
+
+const serverUrl =
+  process.env.REACT_APP_DEVELOPMENT_MODE === "true"
+    ? "http://localhost:5000"
+    : process.env.REACT_APP_BACK_END_URL;
 
 const GameMode = ({ classes }) => {
   const [{ username }] = useAuth();
@@ -55,7 +69,6 @@ const GameMode = ({ classes }) => {
   });
   const [loadingData, setLoadingData] = useState(false);
   const [availableRooms, setAvailableRooms] = useState(null);
-
 
   useEffect(() => {
     if (newGameOptions.confirm) {
@@ -74,7 +87,7 @@ const GameMode = ({ classes }) => {
           myChar: newGameOptions.character,
           username,
         };
-        fetch("http://localhost:5000/roomId", {
+        fetch(`${serverUrl}/roomId`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -115,14 +128,14 @@ const GameMode = ({ classes }) => {
 
   const showAvailableRooms = () => {
     setLoadingData(true);
-    fetch("http://localhost:5000/availableRooms")
-          .then((res) => res.json())
-          .then((rooms) => {
-            console.log(rooms);
-            setAvailableRooms(rooms);
-            setLoadingData(false);
-          });
-  }
+    fetch(`${serverUrl}/availableRooms`)
+      .then((res) => res.json())
+      .then((rooms) => {
+        console.log(rooms);
+        setAvailableRooms(rooms);
+        setLoadingData(false);
+      });
+  };
 
   if (newGameOptions.state === true) {
     return (
@@ -138,15 +151,28 @@ const GameMode = ({ classes }) => {
       <div className={classes.centerToMiddle}>
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (availableRooms) {
     return (
       <div className={classes.backgroundColor}>
-        <AvailableRoomsTable rooms={availableRooms} setMode={setMode} setRoomId={setRoomId} />
+        <Button
+          variant="outlined"
+          color="secondary"
+          className={classes.backButton}
+          onClick={() => setAvailableRooms(null)}
+        >
+          <Typography variant="h5">Back</Typography>
+        </Button>
+        <AvailableRoomsTable
+          rooms={availableRooms}
+          setMode={setMode}
+          setRoomId={setRoomId}
+          setAvailableRooms={setAvailableRooms}
+        />
       </div>
-    )
+    );
   }
 
   if (!mode) {
@@ -160,7 +186,7 @@ const GameMode = ({ classes }) => {
           onClick={(e) => selectGameMode(e)}
         >
           <Typography className={classes.buttonText} variant="h5">
-           Create room with random players
+            Create room with random players
           </Typography>
         </Button>
         <Button
@@ -199,6 +225,16 @@ const GameMode = ({ classes }) => {
         >
           <Typography className={classes.buttonText} variant="h5">
             Select Game Settings
+          </Typography>
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          className={classes.button}
+          onClick={() => setMode('')}
+        >
+          <Typography className={classes.buttonText} variant="h5">
+            Back to Game Mode Options
           </Typography>
         </Button>
       </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import withStyles from "@material-ui/core/styles/withStyles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -21,7 +21,10 @@ const styles = (theme) => ({
     marginLeft: 'auto',
     width: '70%',
     minHeight: '100vh',
-    backgroundColor: theme.styles.colors.secondaryBackgroundColor    
+    backgroundColor: theme.styles.colors.secondaryBackgroundColor,
+    '&::-webkit-scrollbar': {
+      display: 'none'
+    }    
   },
   table: {
     
@@ -37,7 +40,11 @@ const styles = (theme) => ({
   }
 })
 
-function AvailableRoomsTable({ classes, rooms, setMode, setRoomId }) {
+function AvailableRoomsTable({ classes, rooms, setMode, setRoomId, setAvailableRooms }) {
+
+  useEffect(() => {
+    return () => setAvailableRooms(null);
+  }, [])
 
   const joinToRoom = (roomId) => {
     setMode('random');
