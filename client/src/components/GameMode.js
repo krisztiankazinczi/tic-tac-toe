@@ -9,6 +9,7 @@ import { Redirect } from "react-router-dom";
 import { useAuth } from "../store/authProvider";
 
 import NewGameOptions from "./ModalInfo/NewGameOptions";
+import AvailableRoomsTable from "./AvailableRoomsTable";
 
 // import useSocket from '../customHooks/useSocket';
 
@@ -35,6 +36,9 @@ const styles = (theme) => ({
   halfWidth: {
     width: "50%",
   },
+  backgroundColor: {
+    backgroundColor: theme.styles.colors.mainBackgroundColor
+  }
 });
 
 const GameMode = ({ classes }) => {
@@ -49,7 +53,9 @@ const GameMode = ({ classes }) => {
     confirm: false,
     state: false,
   });
-  const [loadingData, setLoadingData] = useState(false)
+  const [loadingData, setLoadingData] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState(null);
+
 
   useEffect(() => {
     if (newGameOptions.confirm) {
@@ -107,6 +113,17 @@ const GameMode = ({ classes }) => {
     setNewGameOptions({ ...newGameOptions, state: true });
   };
 
+  const showAvailableRooms = () => {
+    setLoadingData(true);
+    fetch("http://localhost:5000/availableRooms")
+          .then((res) => res.json())
+          .then((rooms) => {
+            console.log(rooms);
+            setAvailableRooms(rooms);
+            setLoadingData(false);
+          });
+  }
+
   if (newGameOptions.state === true) {
     return (
       <NewGameOptions
@@ -124,6 +141,14 @@ const GameMode = ({ classes }) => {
     )
   }
 
+  if (availableRooms) {
+    return (
+      <div className={classes.backgroundColor}>
+        <AvailableRoomsTable rooms={availableRooms} setMode={setMode} setRoomId={setRoomId} />
+      </div>
+    )
+  }
+
   if (!mode) {
     return (
       <div className={classes.centerToMiddle}>
@@ -135,7 +160,17 @@ const GameMode = ({ classes }) => {
           onClick={(e) => selectGameMode(e)}
         >
           <Typography className={classes.buttonText} variant="h5">
-            Play with random players
+           Create room with random players
+          </Typography>
+        </Button>
+        <Button
+          variant="outlined"
+          color="primary"
+          className={classes.button}
+          onClick={showAvailableRooms}
+        >
+          <Typography className={classes.buttonText} variant="h5">
+            Join in random room
           </Typography>
         </Button>
         <Button

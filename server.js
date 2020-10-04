@@ -85,31 +85,28 @@ app.post("/roomId", (req, res) => {
   res.json(roomId);
 });
 
+app.get('/availableRooms', (req, res) => {
+  const roomsInfo = [];
+  Object.entries(games.random).forEach(([roomId, gameInfo]) => {
+    const roomInfo = {
+      roomId,
+      boardSize: gameInfo.boardSize,
+      winLength: gameInfo.winLength,
+    }
+    const player = Object.keys(gameInfo.players)[0]
+    roomInfo.opponent = player
+    roomsInfo.push(roomInfo);
+  })
+
+  res.status(200).json(roomsInfo);
+})
+
 let games = {
   friend: {},
   random: {},
 };
 
 io.on("connection", (socket) => {
-  // console.log("User connected " + socket.id);
-  // socket.on("get-roomId", (mode, boardSize, winLength, myChar, username) => {
-  //   const roomId = uuidv4();
-  //     games[mode][roomId] = {};
-  //     games[mode][roomId].boardSize = boardSize;
-  //     games[mode][roomId].winLength = winLength;
-  //     games[mode][roomId].characters = {username: myChar};
-  //     games[mode][roomId].players = {};
-
-  //     const generatedBoard = Array(boardSize)
-  //     .fill()
-  //     .map(() => Array(boardSize).fill(""));
-
-  //     games[mode][roomId].board = generatedBoard;
-
-  //     // for some reason socket.emit not worked but if I used both emit and broadcast.emit it worked...
-  //     socket.emit("room-id", roomId);
-  //     socket.broadcast.emit("room-id", roomId)
-  // });
 
   socket.on("join-room", (roomId, mode, username) => {
     if (mode !== "random") {
