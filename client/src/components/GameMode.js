@@ -72,6 +72,7 @@ const GameMode = ({ classes }) => {
   const [polling, setPolling] = useState(false);
 
   useEffect(() => {
+    // stop somehow if someone go back to mode selection
     if (polling) {
       const id = setInterval(() => {
         fetch(`${serverUrl}/availableRooms`)
@@ -154,6 +155,11 @@ const GameMode = ({ classes }) => {
     
       setPolling(true)
   };
+
+  const leaveJoinRoom = () => {
+    setMode('');
+    setPolling(false);
+  }
 
   if (newGameOptions.state === true) {
     return (
@@ -249,7 +255,7 @@ const GameMode = ({ classes }) => {
           variant="outlined"
           color="secondary"
           className={classes.button}
-          onClick={() => setMode('')}
+          onClick={leaveJoinRoom}
         >
           <Typography className={classes.buttonText} variant="h5">
             Back to Game Mode Options

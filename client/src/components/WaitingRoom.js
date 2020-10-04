@@ -13,6 +13,7 @@ import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
 import Error from "./ModalInfo/Error";
+import SetUser from "./SetUser";
 
 import socketIOClient from "socket.io-client";
 
@@ -70,6 +71,7 @@ const styles = (theme) => ({
 const WaitingRoom = ({ classes }) => {
   const { mode, roomId } = useParams();
   const [{ username }] = useAuth();
+  const [signedOut, setSignedOut] = useState(false);
   const [players, setPlayers] = useState([]);
   const [playerJoined, setPlayerJoined] = useState(false); // 1 other player have to join to our game to start
   const [meReady, setMeReady] = useState(false);
@@ -89,7 +91,10 @@ const WaitingRoom = ({ classes }) => {
 
   useEffect(() => {
     // joinRoom(roomId, mode, username)
-    if (!username) return;
+    if (!username) {
+      setSignedOut(true)
+      return;
+    } 
 
     const socket = socketIOClient(serverUrl);
     socket.emit("join-room", roomId, mode, username);
@@ -128,7 +133,7 @@ const WaitingRoom = ({ classes }) => {
     })
 
     return () => socket.disconnect();
-  }, []);
+  }, [username]);
 
   const setStatusToReady = () => {
     const socket = socketIOClient(serverUrl);
@@ -153,6 +158,10 @@ const WaitingRoom = ({ classes }) => {
     if (mode !== "friend") {
       return <Redirect to="/" />;
     }
+  }
+
+  if (signedOut) {
+    return <SetUser open={signedOut} setOpen={setSignedOut} />;
   }
 
   if (joinError) {
@@ -300,6 +309,15 @@ const WaitingRoom = ({ classes }) => {
               </div>
             ) : (
               <div className={classes.center}>
+                <div>
+                  <div className={classes.infoText}>You can select an emoji as character:</div>
+                  {chosenEmoji ? (
+                    <div className={classes.selectedChar} >Your character {chosenEmoji.emoji}</div>
+                  ) : (
+                    <div className={classes.selectedChar}>No emoji Chosen</div>
+                  )}
+                  <Picker onEmojiClick={onEmojiClick} />
+                </div>
                 <Typography
                   className={classes.interactiveTextColor}
                   variant="h5"

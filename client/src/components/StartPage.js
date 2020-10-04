@@ -11,6 +11,10 @@ import { useAuth } from "../store/authProvider";
 
 const styles = (theme) => ({
   ...theme.styles,
+  button: {
+    marginTop: "30px",
+    textTransform: "none",
+  },
 });
 
 const StartPage = ({ classes }) => {
@@ -37,9 +41,8 @@ const StartPage = ({ classes }) => {
   return (
     <div className={classes.centerToMiddle}>
       <div>
-        <Button size="large" className={classes.button} variant="outlined">
+        <Button size="large" className={classes.button} variant="outlined" color="primary">
           <Typography
-            // className={}
             variant="h5"
             onClick={startGame}
           >

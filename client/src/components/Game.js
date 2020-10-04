@@ -415,6 +415,10 @@ const Game = ({ classes }) => {
     return <Redirect to="/" />;
   }
 
+  if (!username) {
+    return <Redirect to="/" />;
+  }
+
   if (info) {
     return (
       <Error message={info} setError={setInfo} buttonNeeded timeLimit={2} />
