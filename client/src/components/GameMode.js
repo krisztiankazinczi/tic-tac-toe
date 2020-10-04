@@ -69,6 +69,21 @@ const GameMode = ({ classes }) => {
   });
   const [loadingData, setLoadingData] = useState(false);
   const [availableRooms, setAvailableRooms] = useState(null);
+  const [polling, setPolling] = useState(false);
+
+  useEffect(() => {
+    if (polling) {
+      const id = setInterval(() => {
+        fetch(`${serverUrl}/availableRooms`)
+        .then((res) => res.json())
+        .then((rooms) => {
+          console.log(rooms)
+          setAvailableRooms(rooms);
+      })
+    }, 5000)
+    return () => clearInterval(id);
+    }
+  }, [polling])
 
   useEffect(() => {
     if (newGameOptions.confirm) {
@@ -103,6 +118,7 @@ const GameMode = ({ classes }) => {
     }
   }, [newGameOptions.confirm]);
 
+
   if (!username) {
     return <Redirect to="/" />;
   }
@@ -128,13 +144,15 @@ const GameMode = ({ classes }) => {
 
   const showAvailableRooms = () => {
     setLoadingData(true);
+
     fetch(`${serverUrl}/availableRooms`)
       .then((res) => res.json())
       .then((rooms) => {
-        console.log(rooms);
         setAvailableRooms(rooms);
         setLoadingData(false);
       });
+    
+      setPolling(true)
   };
 
   if (newGameOptions.state === true) {
