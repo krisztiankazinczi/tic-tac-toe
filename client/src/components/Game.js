@@ -151,8 +151,9 @@ const Game = ({ classes }) => {
     if (newGameOptions.confirm) {
       const socket = socketIOClient(serverUrl);
       socket.emit(
-        "new-game-offer",
+        "rematch",
         roomId,
+        mode,
         username,
         newGameOptions.winLength,
         newGameOptions.boardSize
@@ -160,24 +161,36 @@ const Game = ({ classes }) => {
       setNewGameOptions({ ...newGameOptions, confirm: false });
     }
 
-    if (newConf.confirm) {
-      console.log(newConf)
-      const socket = socketIOClient(serverUrl);
-      socket.emit(
-        "rematch",
-        roomId,
-        mode,
-        newConf.confirm,
-        username,
-        newGameOptions.winLength,
-        newGameOptions.boardSize
-      );
-      setNewConf({
-        ...newConf,
-        confirm: false,
-        question: "",
-      });
-    }
+    // if (newGameOptions.confirm) {
+    //   const socket = socketIOClient(serverUrl);
+    //   socket.emit(
+    //     "new-game-offer",
+    //     roomId,
+    //     username,
+    //     newGameOptions.winLength,
+    //     newGameOptions.boardSize
+    //   );
+    //   setNewGameOptions({ ...newGameOptions, confirm: false });
+    // }
+
+    // if (newConf.confirm) {
+    //   console.log(newConf)
+    //   const socket = socketIOClient(serverUrl);
+    //   socket.emit(
+    //     "rematch",
+    //     roomId,
+    //     mode,
+    //     newConf.confirm,
+    //     username,
+    //     newGameOptions.winLength,
+    //     newGameOptions.boardSize
+    //   );
+    //   setNewConf({
+    //     ...newConf,
+    //     confirm: false,
+    //     question: "",
+    //   });
+    // }
 
   }, [exit, giveUp, draw, drawConfirmation, newGameOptions.confirm, newConf.confirm]);
 
@@ -256,24 +269,27 @@ const Game = ({ classes }) => {
       }
     });
 
-    socket.on(
-      "new-game-confirmation",
-      (message, requestUser, winLength, boardSize) => {
-        if (requestUser !== username) {
-          // this 2 function are not working, but why?????
-          console.log(newConf)
-          setNewConf({
-            ...newConf,
-            state: true,
-            question: message,
-          })
-          setNewGameOptions({ ...newGameOptions, winLength, boardSize });
-          console.log(newConf)
-        }
-      }
-    );
+    // this new-game-confirmation was not working, the popup automatically set a 'NO'value on confirm
+    
+    // socket.on(
+    //   "new-game-confirmation",
+    //   (message, requestUser, winLength, boardSize) => {
+    //     if (requestUser !== username) {
+    //       // this 2 function are not working, but why?????
+    //       console.log(newConf)
+    //       setNewConf({
+    //         ...newConf,
+    //         state: true,
+    //         question: message,
+    //       })
+    //       setNewGameOptions({ ...newGameOptions, winLength, boardSize });
+    //       console.log(newConf)
+    //     }
+    //   }
+    // );
 
     socket.on("get-rematch-data", (board, winLength, onTurn) => {
+      setGameEnd(false);
       setBoard(board);
       setNewGameOptions({ ...newGameOptions, winLength, boardSize: board.length });
       setOnTurn(onTurn)

@@ -54,7 +54,7 @@ const ConfirmationWithTwoOption = ({ confirmation, setConfirmation, setOpen }) =
           onClick={refuse}
           style={button}
           color="secondary"
-          variant="otlined"
+          variant="outlined"
         >
           NO
         </Button>
@@ -62,7 +62,7 @@ const ConfirmationWithTwoOption = ({ confirmation, setConfirmation, setOpen }) =
           onClick={accept}
           style={button}
           color="primary"
-          variant="otlined"
+          variant="outlined"
         >
           YES
         </Button>

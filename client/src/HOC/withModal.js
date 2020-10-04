@@ -13,7 +13,7 @@ const dialogActionsStyle = {
   display: "flex",
   flexDirection: "column",
   backgroundColor: "#3c5573",
-  color: "#9BA8B5",
+  color: "#FEAD51",
   overflow: "hidden",
 };
 

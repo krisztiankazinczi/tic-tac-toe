@@ -313,8 +313,8 @@ io.on("connection", (socket) => {
       );
   });
 
-  socket.on("rematch", (roomId, mode, acceptance, username, winLength, boardSize) => {
-    if (acceptance === "YES") {
+  socket.on("rematch", (roomId, mode, username, winLength, boardSize) => {
+    
       const generatedBoard = Array(boardSize)
         .fill()
         .map(() => Array(boardSize).fill(""));
@@ -330,18 +330,18 @@ io.on("connection", (socket) => {
           games[mode][roomId].winLength,
           games[mode][roomId].onTurn,
         );
-      return;
-    } else {
-      const oppname = getOpponentName(games[mode][roomId].players, username);
-      console.log(oppname);
-      io.sockets
-        .in(roomId)
-        .emit(
-          "error-to-specific-user",
-          `${username} has not accepted your rematch request.`,
-          getOpponentName(games[mode][roomId].players, username)
-        );
-    }
+    
+    // else {
+    //   const oppname = getOpponentName(games[mode][roomId].players, username);
+    //   console.log(oppname);
+    //   io.sockets
+    //     .in(roomId)
+    //     .emit(
+    //       "error-to-specific-user",
+    //       `${username} has not accepted your rematch request.`,
+    //       getOpponentName(games[mode][roomId].players, username)
+    //     );
+    
   });
 
   socket.on("player-left-game", (roomId, mode, username, gameEnd) => {
