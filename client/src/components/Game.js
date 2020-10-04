@@ -11,6 +11,7 @@ import Error from "./ModalInfo/Error";
 import Confirmation from "./ModalInfo/Confirmation";
 import ConfirmationWithTwoOption from "./ModalInfo/ConfirmationWithTwoOption";
 import NewGameOptions from "./ModalInfo/NewGameOptions";
+import Spinner from "./Spinner";
 
 import socketIOClient from "socket.io-client";
 
@@ -50,6 +51,15 @@ const styles = (theme) => ({
     width: "100%",
     backgroundColor: theme.styles.colors.mainBackgroundColor,
   },
+  spinner: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100vh",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.styles.colors.mainBackgroundColor,
+  }
 });
 
 const FONT_SIZE_CORRECTION = 0.025;
@@ -323,7 +333,11 @@ const Game = ({ classes }) => {
   };
 
   if (loading) {
-    return <div>Loading</div>;
+    return (
+      <div className={classes.spinner}>
+        <Spinner />
+      </div>
+    )
   }
 
   if (exit.state) {

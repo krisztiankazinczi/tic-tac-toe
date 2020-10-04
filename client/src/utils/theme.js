@@ -23,7 +23,7 @@ const theme = {
       secondaryBackgroundColor: "#30445C",
       secondaryBackgroundColorHovered: "#3c5573",
       mainTextColor: "#9BA8B5",
-      orangeColor: "#4dd0e1",
+      orangeColor: "#FEAD51",
     },
     button: {
       backgroundColor: "#30445C",
