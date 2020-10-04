@@ -113,6 +113,7 @@ const Game = ({ classes }) => {
     question: "",
     confirm: false,
   });
+  const [closeBrowser, setCloseBrowser] = useState(false);
 
   useEffect(() => {
     if (exit.confirm) {
@@ -193,6 +194,21 @@ const Game = ({ classes }) => {
     // }
 
   }, [exit, giveUp, draw, drawConfirmation, newGameOptions.confirm, newConf.confirm]);
+
+  useEffect(() => {
+      if (closeBrowser) return;
+      const handleBeforeUnload = event => {
+        event.preventDefault()
+        if (!closeBrowser) {
+          const socket = socketIOClient(serverUrl);
+          socket.emit("player-left-game", roomId, mode, username, gameEnd);
+          
+        }
+      };
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [closeBrowser]);
+  
 
   useEffect(() => {
     if (!username) return;

@@ -6,19 +6,22 @@ import copy from "copy-to-clipboard";
 
 import { Redirect } from "react-router-dom";
 import { useAuth } from "../store/authProvider";
-import useSocket from '../customHooks/useSocket';
+import useSocket from "../customHooks/useSocket";
 
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
-import Error from './ModalInfo/Error';
+import Error from "./ModalInfo/Error";
 
-import socketIOClient from 'socket.io-client';
+import socketIOClient from "socket.io-client";
 
-const serverUrl = process.env.REACT_APP_DEVELOPMENT_MODE === 'true'
-  ? "http://localhost:5000"
-  : process.env.REACT_APP_BACK_END_URL;
+import Picker from "emoji-picker-react";
+
+const serverUrl =
+  process.env.REACT_APP_DEVELOPMENT_MODE === "true"
+    ? "http://localhost:5000"
+    : process.env.REACT_APP_BACK_END_URL;
 
 const styles = (theme) => ({
   ...theme.styles,
@@ -34,9 +37,9 @@ const styles = (theme) => ({
     marginTop: "20px",
   },
   button: {
-    fontSize: '25px',
+    fontSize: "25px",
     marginTop: "20px",
-    textTransform: 'none'
+    textTransform: "none",
   },
   center: {
     display: "flex",
@@ -50,20 +53,39 @@ const styles = (theme) => ({
     alignItems: "center",
     justifyContent: "center",
   },
+  selectedChar: {
+    color: theme.palette.primary.main,
+    marginTop: "5px",
+    marginBottom: '20px',
+    fontSize: '25px'
+  },
+  infoText: {
+    color: theme.styles.colors.orangeColor,
+    marginTop: "10px",
+    marginBottom: '5px',
+    fontSize: '15px'
+  }
 });
 
 const WaitingRoom = ({ classes }) => {
   const { mode, roomId } = useParams();
   const [{ username }] = useAuth();
-  const [players, setPlayers] = useState([])
+  const [players, setPlayers] = useState([]);
   const [playerJoined, setPlayerJoined] = useState(false); // 1 other player have to join to our game to start
   const [meReady, setMeReady] = useState(false);
   const [otherPlayerReady, setOtherPlayerReady] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [joinError, setJoinError] = useState(false);
   const [error, setError] = useState("");
+  const [chosenEmoji, setChosenEmoji] = useState(null);
   // const {isConnected, everyoneConnected, loadingData, joinRoom} = useSocket();
 
+  useEffect(() => {
+    if (chosenEmoji) {
+      const socket = socketIOClient(serverUrl);
+      socket.emit("change-character", roomId, mode, username, chosenEmoji.emoji);
+    }
+  }, [chosenEmoji])
 
   useEffect(() => {
     // joinRoom(roomId, mode, username)
@@ -73,48 +95,62 @@ const WaitingRoom = ({ classes }) => {
     socket.emit("join-room", roomId, mode, username);
 
     socket.on("user-connected", (players) => {
-      setPlayers(players)
-    if (Object.keys(players).length === 2) {
-      setPlayerJoined(true)
-    }
+      setPlayers(players);
+      if (Object.keys(players).length === 2) {
+        setPlayerJoined(true);
+      }
     });
 
     socket.on("player-ready", (players) => {
-      setPlayers(players)
+      setPlayers(players);
       Object.entries(players).forEach(([player, values]) => {
         if (values.ready === true) {
           if (player === username.toString()) {
-            setMeReady(true)
-          } 
-          else setOtherPlayerReady(true)
+            setMeReady(true);
+          } else setOtherPlayerReady(true);
         }
-      })
-    })
+      });
+    });
 
     socket.on("joining-errors", (message) => {
       // dialog will pop up and then a click 'OK' will Link to "/"
-      setError(message)
+      setError(message);
       setTimeout(() => {
-        setJoinError(true)
-      }, 2000)
+        setJoinError(true);
+      }, 2000);
+    });
+
+    socket.on("char-used", (message, user) => {
+      if (user === username) {
+        setError(message);
+        setChosenEmoji(null)
+      }
     })
 
     return () => socket.disconnect();
-
   }, []);
 
   const setStatusToReady = () => {
     const socket = socketIOClient(serverUrl);
-    console.log(roomId, mode, username)
-    socket.emit("ready", roomId, mode, username)
-  }
+    socket.emit("ready", roomId, mode, username);
+  };
   const copyURL = () => {
     copy(window.location.href);
     setCopySuccess(true);
   };
 
-  if (mode !== 'random') {
-    if (mode !== 'friend') {
+  const deleteRoom = () => {
+    const socket = socketIOClient(serverUrl);
+    socket.emit("delete-room", roomId, mode, username);
+    setJoinError(true); // just using this to redirect back
+  };
+
+  const onEmojiClick = (event, emojiObject) => {
+    setChosenEmoji(emojiObject);
+  };
+
+  if (mode !== "random") {
+    if (mode !== "friend") {
       return <Redirect to="/" />;
     }
   }
@@ -133,7 +169,7 @@ const WaitingRoom = ({ classes }) => {
     );
   }
 
-  if ( mode === "random") {
+  if (mode === "random") {
     return (
       <div className={classes.centerToMiddle}>
         <Typography className={classes.textColor} variant="h3">
@@ -148,12 +184,26 @@ const WaitingRoom = ({ classes }) => {
               style={{ marginTop: "20px", height: "20px" }}
               color="primary"
             />
+            <div className={classes.center}>
+              <Button
+                size="medium"
+                variant="outlined"
+                color="secondary"
+                className={classes.button}
+                onClick={deleteRoom}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         ) : (
           <div>
             {meReady && !otherPlayerReady ? (
               <div>
-                <Typography className={classes.interactiveTextColor} variant="h5">
+                <Typography
+                  className={classes.interactiveTextColor}
+                  variant="h5"
+                >
                   Waiting for the other player to be ready...
                 </Typography>
                 <LinearProgress
@@ -163,7 +213,19 @@ const WaitingRoom = ({ classes }) => {
               </div>
             ) : (
               <div className={classes.center}>
-                <Typography className={classes.interactiveTextColor} variant="h5">
+                <div>
+                  <div className={classes.infoText}>You can select an emoji as character:</div>
+                  {chosenEmoji ? (
+                    <div className={classes.selectedChar} >Your character {chosenEmoji.emoji}</div>
+                  ) : (
+                    <div className={classes.selectedChar}>No emoji Chosen</div>
+                  )}
+                  <Picker onEmojiClick={onEmojiClick} />
+                </div>
+                <Typography
+                  className={classes.interactiveTextColor}
+                  variant="h5"
+                >
                   Your opponent joined!
                 </Typography>
                 <Button
@@ -183,7 +245,7 @@ const WaitingRoom = ({ classes }) => {
     );
   }
 
-  if ( mode === "friend") {
+  if (mode === "friend") {
     return (
       <div className={classes.centerToMiddle}>
         <Typography className={classes.textColor} variant="h3">
@@ -215,18 +277,20 @@ const WaitingRoom = ({ classes }) => {
                 Waiting for your friends to join...
               </Typography>
               <LinearProgress
-                style={{ marginTop: "20px", height: "20px", width: '100%'}}
+                style={{ marginTop: "20px", height: "20px", width: "100%" }}
                 color="primary"
               />
             </div>
-            <div>
-            </div>
+            <div></div>
           </div>
         ) : (
           <div>
             {meReady && !otherPlayerReady ? (
               <div>
-                <Typography className={classes.interactiveTextColor} variant="h5">
+                <Typography
+                  className={classes.interactiveTextColor}
+                  variant="h5"
+                >
                   Waiting for the other player to be ready...
                 </Typography>
                 <LinearProgress
@@ -236,7 +300,10 @@ const WaitingRoom = ({ classes }) => {
               </div>
             ) : (
               <div className={classes.center}>
-                <Typography className={classes.interactiveTextColor} variant="h5">
+                <Typography
+                  className={classes.interactiveTextColor}
+                  variant="h5"
+                >
                   Your opponent joined!
                 </Typography>
                 <Button
