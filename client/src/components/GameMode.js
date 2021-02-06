@@ -70,19 +70,19 @@ const GameMode = ({ classes }) => {
   const [loadingData, setLoadingData] = useState(false);
   const [availableRooms, setAvailableRooms] = useState(null);
   const [polling, setPolling] = useState(false);
+  const [intervalID, setIntervalID] = useState('');
 
   useEffect(() => {
     // stop somehow if someone go back to mode selection
     if (polling) {
-      const id = setInterval(() => {
+      setIntervalID(setInterval(() => {
         fetch(`${serverUrl}/availableRooms`)
         .then((res) => res.json())
         .then((rooms) => {
           console.log(rooms)
           setAvailableRooms(rooms);
       })
-    }, 5000)
-    return () => clearInterval(id);
+    }, 5000));
     }
   }, [polling])
 
@@ -159,6 +159,14 @@ const GameMode = ({ classes }) => {
   const leaveJoinRoom = () => {
     setMode('');
     setPolling(false);
+    clearInterval(intervalID);
+    setIntervalID('');
+  }
+
+  const goBack = () => {
+    setAvailableRooms(null);
+    clearInterval(intervalID);
+    setIntervalID('');
   }
 
   if (newGameOptions.state === true) {
@@ -185,7 +193,7 @@ const GameMode = ({ classes }) => {
           variant="outlined"
           color="secondary"
           className={classes.backButton}
-          onClick={() => setAvailableRooms(null)}
+          onClick={() => goBack()}
         >
           <Typography variant="h5">Back</Typography>
         </Button>
