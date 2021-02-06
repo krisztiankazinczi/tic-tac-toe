@@ -3,27 +3,18 @@ const cors = require("cors");
 const path = require("path");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
-const { v4: uuidv4 } = require("uuid");
 
-const {
-  isFieldReserved,
-  correctPlayerMove,
-  changeOnTurn,
-} = require("./utils/placeMarkChecks");
 const {
   checkVictoryLength5,
   checkVictoryLength4,
   checkVictoryLength3,
-  checkDraw,
 } = require("./utils/victoryChecks");
 
 const {
   updateScoreOnGiveUp,
-  updateScoreOnVictory,
   updateScoreOnDraw,
   checkIfEveryoneLeftGame,
   getOpponentName,
-  isCharacterUsed
 } = require("./utils/gamePropertyUpdates");
 const { games } = require('./games');
 const { 
@@ -31,6 +22,12 @@ const {
   createRoom,
   getAvailableRooms
 } = require("./controller/room-controller");
+const joinRoom = require("./controller/socket-controller/join-room");
+const deleteRoom = require("./controller/socket-controller/delete-room");
+const changeCharacter = require("./controller/socket-controller/change-character");
+const playerReady = require("./controller/socket-controller/player-ready");
+const getGameData = require("./controller/socket-controller/get-game-data");
+const placeMark = require("./controller/socket-controller/place-mark");
 
 const app = express();
 
@@ -56,173 +53,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "client/build")));
 
 app.get("/api/test", testEndpoint);
-
 app.post("/roomId", createRoom);
-
 app.get('/availableRooms', getAvailableRooms)
 
 io.on("connection", (socket) => {
 
-  socket.on("join-room", (roomId, mode, username) => {
+  socket.on("join-room", joinRoom.bind(null, socket, io));
 
-    if (mode !== "random") {
-      if (mode !== "friend") {
-        socket.emit("joining-errors", "The selected Game Mode is not supported. Please select an existing mode"); 
-        return;
-      }
-    }
-    
-    if (!games[mode][roomId]) {
-      socket.emit("joining-errors", "This room is not existing. Please create one if you want to play."); 
-      return;
-    }
-
-    if (games[mode][roomId].isFull && !games[mode][roomId].players[username]) {
-      socket.emit("joining-errors", "The room is full, select an other room."); 
-      return;
-    } else {
-      socket.join(roomId);
+  socket.on("delete-room", deleteRoom)
   
-      if (!games[mode][roomId].players[username]) {
-        let myChar;
-        Object.entries(games[mode][roomId].players).forEach(
-          ([username, values]) => {
-            myChar = values.character === "X" ? "O" : "X";
-          }
-        );
-        games[mode][roomId].players[username] = {
-          character: myChar,
-          ready: false,
-          score: 0,
-          active: true,
-        };
-      }
+  socket.on("change-character", changeCharacter.bind(null, io))
   
-      io.sockets.in(roomId).emit("user-connected", games[mode][roomId].players);
+  socket.on("ready", playerReady.bind(null, io));
   
-      if (Object.keys(games[mode][roomId].players).length === 2) {
-        games[mode][roomId].isFull = true;
-        games[mode][roomId].players.Tie = {
-          score: 0,
-        };
-      }
+  socket.on("get-game-data", getGameData.bind(null, io));
 
-    }
-  });
-
-  socket.on("delete-room", (roomId, mode, username) => {
-    if (games[mode][roomId].players[username]) {
-      delete games[mode][roomId]
-    }
-  })
-
-  socket.on("change-character", (roomId, mode, username, character) => {
-    const characterUsed = isCharacterUsed(games[mode][roomId].players, character);
-    console.log(characterUsed)
-    if (characterUsed) {
-      io.sockets.in(roomId).emit("char-used", `Unfortunately your opponent selected this character (${character}). Please select an other one!`, username)
-      return;
-    }
-    games[mode][roomId].players[username].character = character;
-  })
-
-  socket.on("ready", (roomId, mode, username) => {
-    // validation
-    games[mode][roomId].players[username].ready = true;
-    io.sockets.in(roomId).emit("player-ready", games[mode][roomId].players);
-  });
-
-  socket.on("get-game-data", (roomId, mode, username) => {
-    //socket.emit not working for some reason.....
-    // validation
-    io.sockets
-      .in(roomId)
-      .emit(
-        "get-initial-data",
-        games[mode][roomId].players,
-        games[mode][roomId].board,
-        games[mode][roomId].onTurn,
-        games[mode][roomId].winLength
-      );
-  });
-
-  socket.on("place-mark", (roomId, mode, username, rowId, colId, char) => {
-    const correctPlayer = correctPlayerMove(
-      games[mode][roomId].onTurn,
-      username
-    );
-    if (!correctPlayer) {
-      io.sockets
-        .in(roomId)
-        .emit(
-          "error-to-specific-user",
-          "It's not your turn, please wait!",
-          username
-        );
-      //why is this socket.emit not working????
-      return;
-    }
-    const reserved = isFieldReserved(games[mode][roomId].board, rowId, colId);
-    if (reserved) {
-      io.sockets
-        .in(roomId)
-        .emit(
-          "error-to-specific-user",
-          "This field is not empty, please select an other one!",
-          username
-        );
-      return;
-    }
-    games[mode][roomId].board[rowId][colId] = char;
-
-    const winner = games[mode][roomId].winCheck(
-      games[mode][roomId].board,
-      char
-    );
-    if (winner) {
-      games[mode][roomId].players = updateScoreOnVictory(
-        games[mode][roomId].players,
-        username
-      );
-      io.sockets
-        .in(roomId)
-        .emit(
-          "victory",
-          rowId,
-          colId,
-          char,
-          `${username} has won the game. Congrats!`,
-          games[mode][roomId].players
-        );
-      return;
-    }
-
-    const emptyFieldsLeft = checkDraw(games[mode][roomId].board);
-    if (!emptyFieldsLeft) {
-      games[mode][roomId].players = updateScoreOnDraw(
-        games[mode][roomId].players
-      );
-      io.sockets
-        .in(roomId)
-        .emit(
-          "victory",
-          rowId,
-          colId,
-          char,
-          "The game has been draw.",
-          games[mode][roomId].players
-        );
-      return;
-    }
-
-    games[mode][roomId].onTurn = changeOnTurn(
-      games[mode][roomId].onTurn,
-      games[mode][roomId].players
-    );
-    io.sockets
-      .in(roomId)
-      .emit("placed-mark", rowId, colId, char, games[mode][roomId].onTurn);
-  });
+  socket.on("place-mark", placeMark.bind(null, io));
 
   socket.on("draw-game-offer", (roomId, username) => {
     io.sockets
